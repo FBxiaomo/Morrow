@@ -14,6 +14,9 @@ export class GlyphSurface {
 
   rebuild() {
     if (!this.dirty) return false;
+    // Theme entrances animate the clock area; a mid-flight measurement would bake the
+    // transitional offset into the collision surface. Retry on a later frame instead.
+    if (document.querySelector('.clock-area')?.getAnimations().length) return false;
     this.dirty = false;
     const spans = Array.from(document.querySelectorAll<HTMLElement>('.clock-time > span')).filter(el => el.textContent && el.offsetWidth);
     if (!spans.length) return false;

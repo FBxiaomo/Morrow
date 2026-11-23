@@ -20,7 +20,7 @@
 
 ### 应用清单
 
-- **FR-PWA-08** manifest 应声明独立窗口（standalone）、中文名「末时钟 · 天气氛围与专注时钟」、`zh-CN`、深色主题色与 SVG 图标。
+- **FR-PWA-08** manifest 应声明独立窗口（standalone）、**英文品牌名**「Morrow · 天气氛围与专注时钟」（`short_name: Morrow`）、`zh-CN`、深色主题色与 SVG 图标；浏览器标签头标（`<title>`）应与 manifest `name` 一致使用英文品牌名（描述文案保持中文，有测试断言）。
 
 ### 屏幕常亮
 
@@ -40,6 +40,7 @@
 | 需求 | 用例 |
 | --- | --- |
 | FR-PWA-07 | `desktop.spec` 离线刷新保留旧天气 + stale |
+| FR-PWA-08 | `release.spec` 标签头标与 manifest 名称使用英文品牌名 |
 | FR-PWA-01–06 | `npm run preview` 人工验收路径（当前测试矩阵仅 dev server，见项目规范 §12 已知局限） |
 
 ## 未决事项

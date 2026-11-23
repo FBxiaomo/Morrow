@@ -34,7 +34,11 @@ test('window rain refracts the outdoors while the frame and indoor clock stay in
   expect(layers.parent).toBe('BODY');
   const frame = await page.locator('.window-frame').boundingBox();
   const rail = await page.locator('.window-mullion').boundingBox();
-  const railClip = { x: Math.round(rail!.x + 8), y: 120, width: 8, height: 170 };
+  // Sample only the scrim-free upper band of the mullion: the clock's blurred scrim
+  // (.clock-area::before, blur 24px) reaches the lower band, and Chromium alternates the
+  // gradient dither there between composites (±1/255), which made this byte-exact
+  // freeze check flake while the mullion itself stays static.
+  const railClip = { x: Math.round(rail!.x + 8), y: 120, width: 8, height: 60 };
   const before = await page.screenshot({ clip: railClip });
   await page.waitForTimeout(200);
   expect((await page.screenshot({ clip: railClip })).equals(before)).toBe(true);

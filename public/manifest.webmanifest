@@ -1,6 +1,6 @@
 {
-  "name": "末时钟 · 天气氛围与专注时钟",
-  "short_name": "末时钟",
+  "name": "Morrow · 天气氛围与专注时钟",
+  "short_name": "Morrow",
   "description": "为学习、办公与休息提供低干扰的天气氛围时钟。",
   "start_url": "./",
   "display": "standalone",

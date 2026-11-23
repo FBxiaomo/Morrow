@@ -172,3 +172,31 @@ test('realistic rain and snow follow font, theme and viewport changes without ru
   await expect(page.getByLabel('雨雪与数字互动', { exact: true })).toBeDisabled();
   expect(errors).toEqual([]);
 });
+
+test('hot theme switches keep the glyph surface aligned with the settled digits', async ({ page }) => {
+  await page.evaluate(() => {
+    const { store, themes } = window.desktop;
+    themes.switch('sky');
+    store.set('weather.mode', 'manual'); store.set('weather.manual', 'rain');
+    store.set('weather.quality', 'realistic'); store.set('weather.intensity', 100);
+    store.set('appearance.motion', 'full'); store.set('content.secondsStyle', 'off');
+  });
+  await page.waitForFunction(() => window.desktop.landscape.diagnostics.sceneReady);
+  await page.waitForTimeout(2000);
+  // Collision surface bounds versus the digit box they must represent (5px padding).
+  const drift = () => page.evaluate(() => {
+    const effects = (window.desktop.landscape as unknown as { effects: null | { surface: { bounds: { x: number; y: number } } } }).effects;
+    const spans = Array.from(document.querySelectorAll<HTMLElement>('.clock-time > span')).filter(el => el.textContent && el.offsetWidth);
+    const rects = spans.map(el => el.getBoundingClientRect());
+    const left = Math.min(...rects.map(r => r.left)), top = Math.min(...rects.map(r => r.top));
+    const bounds = effects?.surface.bounds;
+    return bounds ? Math.max(Math.abs(bounds.x - (left - 5)), Math.abs(bounds.y - (top - 5))) : 99;
+  });
+  expect(await drift()).toBeLessThanOrEqual(2);
+  // The entrance animation moves the digits: alignment must return once it settles.
+  await page.evaluate(() => window.desktop.themes.switch('studio'));
+  await expect.poll(drift, { timeout: 5000 }).toBeLessThanOrEqual(2);
+  // Static mode freezes the render loop, so the settle must still trigger exactly one re-read.
+  await page.evaluate(() => { window.desktop.store.set('appearance.motion', 'off'); window.desktop.themes.switch('editorial'); });
+  await expect.poll(drift, { timeout: 5000 }).toBeLessThanOrEqual(2);
+});

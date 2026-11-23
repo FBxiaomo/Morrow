@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | `npm run dev` | 开发服务器 | `http://127.0.0.1:5190/`，DEV 专属 `/__local-fonts` 字体中间件可用 |
 | `npm run build` | 类型检查 + 生产构建 | `tsc && vite build`，**tsc 失败即构建失败**，含遗留模块 |
-| `npm test` | Playwright 回归（44 项） | Edge 通道、`127.0.0.1:5192`、workers=1、时区固定 Asia/Shanghai |
+| `npm test` | Playwright 回归（46 项） | Edge 通道、`127.0.0.1:5192`、workers=1、时区固定 Asia/Shanghai |
 | `npm run preview` | 生产构建预览 | 验证 PWA 离线缓存行为时使用 |
 
 ## 3. 架构速览
@@ -59,7 +59,7 @@ public/sw.js         PWA：核心界面离线缓存，不拦截跨源（天气�
 
 ## 5. 测试须知
 
-- 44 项回归在 `tests/`（7 个 spec）：驱动方式一律 `window.desktop.*`，**不走截图金盒**；视觉冻结用截图 SHA-256 指纹断言。
+- 46 项回归在 `tests/`（7 个 spec）：驱动方式一律 `window.desktop.*`，**不走截图金盒**；视觉冻结用截图 SHA-256 指纹断言。
 - Open-Meteo 两个域名在测试中一律 `route.abort()` 或固定 mock，**绝不真联网**。
 - 时钟相关用例用 `page.clock.setFixedTime(...)` 固定时间；`timezoneId: 'Asia/Shanghai'`。
 - 行为级改动必须补对应用例并全量跑过 `npm test` 后才算完成；验收截图（如需要）输出到 `artifacts/<主题>-<日期>/`。

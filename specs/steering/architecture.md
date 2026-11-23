@@ -78,7 +78,7 @@ PomodoroService（200ms tick 驱动 normalize）：
 ## 4. 存储与外部边界
 
 - 存储注册表：见 `docs/项目规范.md` §5.2（8 个键位 + 迁移状态）。
-- 网络：天气数据仅 Open-Meteo 两个域名（geocoding 10s 超时 / forecast 12s 超时），30 分钟 TTL + `online`/`visibilitychange` 触发，无重试轰炸；定位后的地名解析走 BigDataCloud 免密钥客户端端点（10s 超时，仅点击「使用当前位置」后触发，失败回退「当前位置」占位）。
+- 网络：天气数据仅 Open-Meteo 两个域名（geocoding 10s 超时 / forecast 12s 超时），30 分钟 TTL + `online`/`visibilitychange` 触发，无重试轰炸；定位后的地名解析走 BigDataCloud 免密钥客户端端点 `api-bdc.io`（10s 超时，仅点击「使用当前位置」后触发，失败回退「当前位置」占位）。
 - 测试探针：`window.desktop = { store, themes, weather, landscape, dashboard, customizer, focusDialog, pomodoro, audio }`。
 - 状态通道：`body.dataset`（theme/position/motion/weather/phase/customizer/customFont/weatherQuality/windowGlass/cloudRenderer）+ 唯一自定义事件 `clock-layoutchange`。
 

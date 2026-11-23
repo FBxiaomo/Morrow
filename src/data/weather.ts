@@ -99,7 +99,7 @@ export class WeatherService {
     /** Resolves coordinates into a Chinese place name for display; throws when the lookup fails. */
     async reverseGeocode(latitude: number, longitude: number): Promise<string> {
         const params = new URLSearchParams({ latitude: String(latitude), longitude: String(longitude), localityLanguage: 'zh' });
-        const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?' + params, { signal: AbortSignal.timeout(10000) });
+        const res = await fetch('https://api-bdc.io/data/reverse-geocode-client?' + params, { signal: AbortSignal.timeout(10000) });
         if (!res.ok)
             throw new Error('位置名称暂不可用');
         const data = await res.json() as {

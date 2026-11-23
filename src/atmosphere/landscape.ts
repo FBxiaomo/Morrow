@@ -75,7 +75,10 @@ export class Landscape {
                 void this.loadImage();
             if (key === 'appearance.motion')
                 this.resize();
-            if (key === 'theme') this.photos.load(this.store.get<string>('theme'));
+            if (key === 'theme') {
+                this.photos.load(this.store.get<string>('theme'));
+                this.settleClockGeometry();
+            }
             if (['weather.quality', 'weather.visual', 'weather.glass', 'theme', 'background.type'].includes(key)) {
                 this.windowGlassFailed = false;
                 this.volumetricFailed = false;
@@ -111,6 +114,12 @@ export class Landscape {
         if (!high || this.store.get('theme') !== 'window' || !this.store.get('weather.glass')) this.disposeGlass();
         document.body.dataset.weatherQuality = this.store.get<string>('weather.quality');
         this.dirty = true;
+    }
+    /** The theme entrance animates the clock; re-read digit geometry once it ends (static mode included). */
+    private settleClockGeometry() {
+        const area = document.querySelector('.clock-area');
+        if (area)
+            area.addEventListener('animationend', () => { this.effects?.invalidateMask(); this.dirty = true; }, { once: true });
     }
     private snowTemperature() { return this.store.get('weather.mode') === 'live' ? this.weather?.temp : undefined; }
     private disposeGlass() {

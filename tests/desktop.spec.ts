@@ -80,7 +80,7 @@ test('city search resolves ambiguity and connects actual weather', async ({ page
 test('locate resolves the Chinese place name before connecting actual weather', async ({ page }) => {
     await page.context().grantPermissions(['geolocation']);
     await page.context().setGeolocation({ latitude: 30.2741, longitude: 120.1551 });
-    await page.route('https://api.bigdatacloud.net/**', route => route.fulfill({ json: { city: '杭州市', locality: '拱墅区', principalSubdivision: '浙江省' } }));
+    await page.route('https://api-bdc.io/**', route => route.fulfill({ json: { city: '杭州市', locality: '拱墅区', principalSubdivision: '浙江省' } }));
     await page.route('https://api.open-meteo.com/**', route => {
         expect(new URL(route.request().url()).searchParams.get('latitude')).toBe('30.2741');
         return route.fulfill({ json: forecast() });
@@ -96,7 +96,7 @@ test('locate resolves the Chinese place name before connecting actual weather', 
 test('locate falls back to the honest placeholder when the name lookup fails', async ({ page }) => {
     await page.context().grantPermissions(['geolocation']);
     await page.context().setGeolocation({ latitude: 51.5074, longitude: -0.1278 });
-    await page.route('https://api.bigdatacloud.net/**', route => route.abort());
+    await page.route('https://api-bdc.io/**', route => route.abort());
     await page.route('https://api.open-meteo.com/**', route => route.fulfill({ json: forecast() }));
     await page.getByRole('button', { name: '选择天气城市' }).click();
     await page.getByRole('button', { name: '使用当前位置' }).click();
@@ -107,7 +107,7 @@ test('locate falls back to the honest placeholder when the name lookup fails', a
 test('a late locate result never overwrites a newer city choice', async ({ page }) => {
     let lookups = 0;
     await page.route('https://geocoding-api.open-meteo.com/**', route => route.fulfill({ json: { results: [{ name: '伦敦', latitude: 51.5, longitude: -0.1 }] } }));
-    await page.route('https://api.bigdatacloud.net/**', route => { lookups++; return route.fulfill({ json: { city: '杭州市' } }); });
+    await page.route('https://api-bdc.io/**', route => { lookups++; return route.fulfill({ json: { city: '杭州市' } }); });
     await page.route('https://api.open-meteo.com/**', route => route.fulfill({ json: forecast() }));
     await page.getByRole('button', { name: '选择天气城市' }).click();
     await page.evaluate(() => {

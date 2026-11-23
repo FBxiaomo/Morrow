@@ -7,6 +7,13 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => !!window.desktop);
 });
 
+test('browser head and installed identity carry the English product name', async ({ page }) => {
+  await expect(page).toHaveTitle('Morrow · 天气氛围与专注时钟');
+  const manifest = await page.evaluate(async () => (await (await fetch('/manifest.webmanifest')).json()) as { name: string; short_name: string });
+  expect(manifest.name).toBe('Morrow · 天气氛围与专注时钟');
+  expect(manifest.short_name).toBe('Morrow');
+});
+
 test('focus has a complete task flow and double space never ends it', async ({ page }) => {
   await page.locator('.toolbar-focus').click();
   await expect(page.locator('.focus-dialog')).toBeVisible();
