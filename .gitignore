@@ -1,0 +1,15 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+# 测试输出
+test-results/
+playwright-report/
+
+# 开发期验收制品（截图、探针脚本）
+artifacts/
+
+# 本机恢复目录
+.acl-recovery/

@@ -1,0 +1,140 @@
+/* Outdoors (stage) → wet glass → architectural frame → indoor clock and controls. */
+.window-glass {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+body[data-theme='window'] {
+  --window-inset: 22px;
+  --window-bottom: 90px;
+  --window-rail: 21px;
+  --window-divider: 77%;
+}
+
+/* The room-side reveal hides outdoor rain around the edge and below the sill. */
+body[data-theme='window']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border-style: solid;
+  border-width: var(--window-inset) var(--window-inset) var(--window-bottom);
+  border-color: #242b2e;
+  border-image: linear-gradient(115deg, #3c4140, #262d30 38%, #1c272d 80%, #30383a) 1;
+  z-index: 2;
+  pointer-events: none;
+}
+
+body[data-theme='window'] .weather-fx { visibility: hidden; }
+body[data-theme='window'] .desktop { z-index: 5; }
+body[data-theme='window'][data-position='auto'] .clock-area { left: 10%; right: 27%; top: 41%; }
+body[data-theme='window'] .clock-time { text-shadow: 0 2px 24px rgba(5,17,25,.4); }
+body[data-theme='window'] .bottom-info { text-shadow: 0 1px 12px rgba(4,16,24,.6); }
+
+body[data-theme='window'] .window-frame {
+  display: block;
+  position: fixed;
+  inset: var(--window-inset) var(--window-inset) var(--window-bottom);
+  border: var(--window-rail) solid #243237;
+  border-image: linear-gradient(135deg, #53605f, #344447 18%, #162830 51%, #415155 81%, #14242d) 1;
+  box-shadow: 0 0 0 1px #12222a, 0 0 0 5px #2c383b,
+    0 15px 36px rgba(3,11,17,.36), inset 0 0 0 2px #0f202a,
+    inset 0 0 0 5px rgba(139,160,164,.32), inset 0 0 34px rgba(5,15,22,.4);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Soft room reflections stay behind the solid rails. */
+body[data-theme='window'] .window-frame::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: linear-gradient(116deg, rgba(226,236,228,.045), transparent 21%,
+    transparent 70%, rgba(235,240,225,.055) 72%, transparent 76%);
+}
+
+.window-mullion {
+  position: absolute;
+  left: var(--window-divider);
+  top: -21px;
+  bottom: -21px;
+  width: 27px;
+  background: linear-gradient(90deg, #10212a, #6a7776 11%, #34494e 23%, #25383e 62%, #14262f 82%, #496064 91%, #10212a);
+  border-left: 1px solid #0f1c24;
+  border-right: 1px solid #12232b;
+  box-shadow: -3px 0 5px rgba(3,11,18,.22), 8px 1px 18px rgba(3,11,18,.27);
+}
+
+.window-transom {
+  position: absolute;
+  top: 76%;
+  left: -21px;
+  right: -21px;
+  height: 23px;
+  background: linear-gradient(#162932, #7c8680 10%, #364b4f 22%, #20353e 62%, #152934 80%, #4f6468 92%, #0b1e2a);
+  box-shadow: 0 7px 15px rgba(3,11,18,.32);
+}
+
+.window-latch {
+  position: absolute;
+  left: calc(var(--window-divider) + 9px);
+  top: 48%;
+  height: 58px;
+  width: 10px;
+  border: 1px solid #131e24;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #253339, #9ca6a1 32%, #60716f 55%, #25373d);
+  box-shadow: 4px 3px 5px rgba(0,0,0,.4);
+}
+
+.window-latch::after {
+  content: '';
+  position: absolute;
+  top: 19px;
+  left: -4px;
+  width: 13px;
+  height: 49px;
+  border-radius: 3px 3px 6px 6px;
+  background: linear-gradient(90deg, #182a31, #adb3a9 28%, #5a6a69 55%, #25363d);
+  box-shadow: 5px 4px 8px rgba(0,0,0,.35);
+}
+
+.window-sill {
+  position: absolute;
+  top: calc(100% + var(--window-rail));
+  left: calc(-1 * var(--window-rail) - 11px);
+  right: calc(-1 * var(--window-rail) - 11px);
+  height: 25px;
+  background: repeating-linear-gradient(2deg, transparent 0 2px, rgba(238,233,213,.025) 3px 4px),
+    linear-gradient(#84918a, #5d6e6b 15%, #3d5053 31%, #24393f 34%, #182c34 76%, #11252e);
+  border-top: 1px solid rgba(226,232,215,.3);
+  border-bottom: 1px solid #14232c;
+  box-shadow: 0 14px 22px rgba(0,0,0,.4), 0 2px 2px rgba(0,0,0,.5);
+}
+
+body[data-theme='window'] .desktop-footer { padding-bottom: 2px; }
+
+.preview-window::after {
+  border-color: #34484e;
+  box-shadow: inset 0 0 0 1px #76817a;
+  background: linear-gradient(90deg, transparent 77%, #34484e 77%, #34484e 79%, transparent 79%),
+    linear-gradient(transparent 76%, #34484e 76%, #34484e 79%, transparent 79%);
+}
+
+@media (max-width: 700px) {
+  body[data-theme='window'] { --window-inset: 8px; --window-rail: 11px; --window-bottom: 88px; }
+  body[data-theme='window'][data-position='auto'] .clock-area { left: 9%; right: 9%; top: 37%; }
+  .window-mullion, .window-latch { display: none; }
+  .window-transom { top: 69%; height: 16px; left: -11px; right: -11px; }
+  .window-sill { height: 18px; }
+  body[data-theme='window'] .window-frame { box-shadow: inset 0 0 0 2px #14262e, inset 0 0 23px rgba(5,15,22,.35); }
+}
+
+@media (max-height: 620px) and (min-width: 701px) {
+  body[data-theme='window'] { --window-inset: 12px; --window-rail: 15px; --window-bottom: 65px; }
+  .window-transom { top: 83%; height: 18px; }
+  .window-latch { top: 42%; }
+}

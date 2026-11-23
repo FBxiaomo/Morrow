@@ -1,0 +1,6 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // 本机默认 shell（PowerShell Preview 应用别名损坏，os error 5），改用 Windows PowerShell。
+  // 修复后如不再需要，可删除本文件的 shell 字段。
+  "shell": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+}

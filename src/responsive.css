@@ -1,0 +1,120 @@
+@media (min-width: 1600px) {
+  .desktop { padding: 40px 60px 28px; }
+  .clock-time { font-size: calc(250px * var(--clock-scale)); }
+  .clock-area { top: 44%; }
+  .bottom-info { left: 60px; right: 60px; bottom: 132px; }
+}
+
+@media (max-width: 1100px) {
+  .desktop { padding: 26px 30px 20px; }
+  .bottom-info { left: 30px; right: 30px; bottom: 106px; }
+  .footer-hint { display: none; }
+  .theme-label { width: auto; }
+  .world-clocks { gap: 20px; }
+  .clock-area { top: 43%; }
+  .toolbar kbd { display: none; }
+  .scene-title { font-size: 18px; }
+  .weather-stats { max-width: 400px; }
+}
+
+@media (max-width: 700px) {
+  .desktop, body[data-theme='window'] .desktop { padding: 20px 22px max(16px, env(safe-area-inset-bottom)); }
+  .topbar { gap: 12px; }
+  .topbar .brand { gap: 9px; font-size: 13px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .brand small { font-size: 11px; letter-spacing: .05em; }
+  .location-button { max-width: 54%; gap: 7px; font-size: 12px; line-height: 1.5; text-align: right; }
+  .location-button .icon { width: 18px; height: 18px; }
+  .clock-area, body[data-theme='studio'] .clock-area, body[data-theme='window'] .clock-area, body[data-theme='editorial'] .clock-area { top: 35%; left: 6%; right: 6%; }
+  .clock-time, body[data-theme='studio'] .clock-time, body[data-theme='window'] .clock-time, body[data-theme='editorial'] .clock-time { font-size: calc(20vw * var(--clock-scale)); }
+  .clock-eyebrow { margin-bottom: 15px; font-size: 12px; letter-spacing: .16em; }
+  .clock-meta { flex-wrap: wrap; gap: 8px 12px; margin-top: 18px; font-size: 13px; letter-spacing: .07em; }
+  .clock-lunar { font-size: 12px; }
+  .seconds-display { margin-top: 20px; }
+  .bottom-info, body[data-theme='studio'] .bottom-info, body[data-theme='editorial'] .bottom-info { left: 22px; right: 22px; bottom: 142px; flex-direction: column; align-items: flex-start; gap: 20px; }
+  .scene-title { margin-top: 8px; font-size: 17px; }
+  .weather-stats { max-width: 100%; font-size: 12px; }
+  .small-label { font-size: 11px; }
+  .world-clocks, body[data-theme='editorial'] .world-clocks { position: static; flex-direction: row; gap: 22px; }
+  .world-clocks > div, body[data-theme='editorial'] .world-clocks > div { flex-direction: column; gap: 6px; font-size: 12px; }
+  .world-clocks strong { font-size: 17px; }
+  .moon-widget { position: static; }
+  .desktop-footer, body[data-theme='editorial'] .desktop-footer { justify-content: center; flex-wrap: wrap; gap: 12px; padding-top: 12px; }
+  .theme-label { position: absolute; bottom: 64px; left: 0; width: auto; font-size: 12px; }
+  .mode-label { font-size: 11px; }
+  .toolbar { margin: 0 auto; padding: 5px; }
+  .toolbar button { min-width: 40px; min-height: 44px; padding: 9px 10px; font-size: 12px; }
+  .toolbar .toolbar-focus { padding-inline: 12px; }
+  .toolbar .icon { width: 16px; height: 16px; }
+  .focus-inline { max-width: 100%; }
+  .focus-status { max-width: calc(100vw - 110px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+@media (max-width: 420px) {
+  .desktop, body[data-theme='window'] .desktop { padding-inline: 16px; }
+  .toolbar button { padding-inline: 8px; }
+  .toolbar .toolbar-focus { padding-inline: 10px; }
+  .bottom-info, body[data-theme='studio'] .bottom-info, body[data-theme='editorial'] .bottom-info { left: 16px; right: 16px; }
+  .world-clocks, body[data-theme='editorial'] .world-clocks { gap: 17px; }
+}
+
+@media (max-height: 620px) and (min-width: 701px) {
+  .desktop { padding-top: 18px; }
+  .clock-area { top: 42%; }
+  .clock-eyebrow { margin-bottom: 10px; }
+  .clock-meta { margin-top: 12px; }
+  .seconds-display { margin-top: 14px; }
+  .bottom-info { bottom: 92px; }
+  .scene-note .small-label { display: none; }
+  .scene-title { margin-top: 0; font-size: 16px; }
+  .weather-stats { margin-top: 6px; }
+  body[data-theme='studio'] .bottom-info { bottom: 90px; padding-top: 12px; }
+}
+
+/* Editorial stacks a tall clock over a tall information block; below ~940px they collide. */
+@media (max-height: 940px) and (min-width: 701px) {
+  body[data-theme='editorial'] .clock-area { top: 38%; }
+  body[data-theme='editorial'] .clock-time { font-size: clamp(72px, calc(15.5vw * var(--clock-scale)), calc(24vh * var(--clock-scale))); }
+}
+
+/* Compact landscape is a separate composition, not a shrunken portrait. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .desktop, body[data-theme='window'] .desktop { padding: 12px 24px 10px; }
+  .brand { font-size: 13px; }
+  .brand small { display: none; }
+  .brand-mark { width: 28px; height: 28px; }
+  .location-button { min-height: 40px; font-size: 12px; }
+  .clock-area, body[data-theme='studio'] .clock-area, body[data-theme='window'] .clock-area, body[data-theme='editorial'] .clock-area,
+  body[data-position='center'] .clock-area, body[data-position='right'] .clock-area { top: 46%; left: 6%; right: 34%; text-align: left; }
+  .clock-time, body[data-theme='studio'] .clock-time, body[data-theme='window'] .clock-time, body[data-theme='editorial'] .clock-time,
+  body[data-position='center'] .clock-time, body[data-position='right'] .clock-time { justify-content: flex-start; font-size: clamp(54px, calc(14vw * var(--clock-scale)), calc(31vh * var(--clock-scale))); }
+  .clock-eyebrow, .clock-lunar, .meta-separator, .seconds-caption, .scene-note, .moon-widget { display: none !important; }
+  .clock-meta, body[data-theme='studio'] .clock-meta, body[data-theme='window'] .clock-meta, body[data-theme='editorial'] .clock-meta,
+  body[data-position='center'] .clock-meta, body[data-position='right'] .clock-meta { justify-content: flex-start; margin-top: 8px; font-size: 12px; }
+  .seconds-display { margin-top: 10px; }
+  .seconds-display .clock-progress { width: 120px; }
+  .focus-inline, body[data-theme='studio'] .focus-inline, body[data-theme='window'] .focus-inline, body[data-theme='editorial'] .focus-inline { justify-content: flex-start; margin-top: 8px; }
+  .focus-status, .focus-end { min-height: 34px; padding-block: 6px; }
+  .bottom-info, body[data-theme='studio'] .bottom-info, body[data-theme='editorial'] .bottom-info,
+  body[data-theme='editorial'] .bottom-info { inset: 62px 24px auto auto; display: block; padding: 0; border: 0; }
+  .world-clocks, body[data-theme='editorial'] .world-clocks { position: static; flex-direction: column; align-items: flex-end; gap: 6px; padding-top: 0; }
+  .world-clocks > div, body[data-theme='editorial'] .world-clocks > div { flex-direction: row; align-items: baseline; gap: 18px; font-size: 11px; }
+  .world-clocks strong { font-size: 15px; }
+  .desktop-footer, body[data-theme='editorial'] .desktop-footer { min-height: 44px; padding-top: 0; border: 0; }
+  .theme-label { position: static; width: auto; font-size: 12px; }
+  .toolbar { margin-left: auto; margin-right: 0; }
+  .toolbar button { min-height: 40px; padding-block: 7px; }
+  body[data-theme='editorial'] .topbar { padding-bottom: 8px; }
+  body[data-theme='studio'] .world-clocks > div, body[data-theme='studio'] .world-clocks strong { color: #101410; font-weight: 600; }
+  /* In landscape the world clock lands on the dark window shadow; a wide soft glow restores legibility. */
+  body[data-theme='studio'] .bottom-info::before {
+    content: ""; position: absolute; z-index: -1; pointer-events: none;
+    inset: -48px -36px -42px -56px;
+    background: radial-gradient(ellipse at 72% 50%, rgba(249, 247, 239, .94), rgba(249, 247, 239, .66) 44%, rgba(249, 247, 239, .24) 72%, transparent 92%);
+    filter: blur(15px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

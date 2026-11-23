@@ -1,0 +1,11 @@
+{
+  "name": "末时钟 · 天气氛围与专注时钟",
+  "short_name": "末时钟",
+  "description": "为学习、办公与休息提供低干扰的天气氛围时钟。",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#101b25",
+  "theme_color": "#101b25",
+  "lang": "zh-CN",
+  "icons": [{ "src": "./horloge-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

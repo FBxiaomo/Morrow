@@ -1,0 +1,100 @@
+.focus-dialog {
+  --focus-text: #f2f4ee;
+  --focus-soft: rgba(233, 241, 234, .82);
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: auto;
+  border: 1px solid rgba(241, 250, 243, .25);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(238, 250, 241, .1), transparent 45%), rgba(15, 28, 32, .88);
+  color: var(--focus-text);
+  box-shadow: 0 30px 100px rgba(3, 12, 16, .38), inset 0 1px 0 rgba(255, 255, 255, .14);
+  backdrop-filter: blur(28px) saturate(130%);
+  color-scheme: dark;
+  user-select: auto;
+}
+.focus-dialog[open] { animation: focus-in .26s cubic-bezier(.2, .8, .2, 1); }
+.focus-dialog::backdrop { background: rgba(5, 13, 18, .34); backdrop-filter: blur(10px); }
+@keyframes focus-in { from { opacity: 0; transform: scale(.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.focus-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 28px 28px 22px; }
+.focus-overline, .review-overline { display: block; color: #c2d8cb; font-size: 11px; letter-spacing: .16em; }
+.focus-header h1 { margin: 9px 0 0; font-size: 23px; font-weight: 500; letter-spacing: .02em; }
+.focus-close { flex-shrink: 0; width: 40px; height: 40px; }
+.focus-setup, .focus-review { padding: 4px 28px 28px; }
+.focus-task-field > span, .focus-duration > span { display: block; margin-bottom: 10px; color: var(--focus-soft); font-size: 13px; }
+.focus-task-field input { width: 100%; min-height: 52px; padding: 13px 15px; border: 1px solid rgba(237, 248, 239, .16); border-radius: 14px; background: rgba(4, 15, 19, .25); color: var(--focus-text); font-size: 16px; line-height: 1.5; user-select: text; transition: border-color .2s, background .2s; }
+.focus-task-field input::placeholder { color: rgba(229, 238, 230, .48); }
+.focus-task-field input:hover { border-color: rgba(237, 248, 239, .3); }
+.focus-task-field input:focus { border-color: #a8c7b4; background: rgba(4, 15, 19, .36); }
+.focus-duration { margin-top: 24px; }
+.duration-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.duration-options button { min-height: 64px; border: 1px solid rgba(237, 248, 239, .14); border-radius: 15px; background: rgba(237, 248, 239, .035); color: var(--focus-text); font-size: 22px; font-variant-numeric: tabular-nums; transition: border-color .18s, background .18s, transform .18s; }
+.duration-options button small { font-size: 11px; font-weight: 400; opacity: .66; }
+.duration-options button:hover { border-color: rgba(210, 235, 217, .42); background: rgba(220, 240, 223, .08); }
+.duration-options button:active { transform: scale(.97); }
+.duration-options button.selected { border-color: #bed5c4; background: rgba(198, 222, 204, .14); box-shadow: inset 0 0 0 1px rgba(202, 228, 209, .12); }
+.focus-today { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 12px; color: var(--focus-soft); font-size: 12px; }
+.focus-today strong { margin-left: auto; color: var(--focus-text); font-size: 15px; font-weight: 500; }
+.today-minutes { min-width: 52px; text-align: right; }
+.focus-notification { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 10px 2px; border: 0; border-top: 1px solid rgba(237, 248, 239, .1); border-bottom: 1px solid rgba(237, 248, 239, .1); background: transparent; color: var(--focus-soft); font-size: 13px; text-align: left; }
+.focus-notification .icon { width: 17px; height: 17px; }
+.focus-notification i { position: relative; width: 34px; height: 20px; margin-left: auto; border-radius: 12px; background: rgba(234, 242, 234, .17); transition: background .2s; }
+.focus-notification i::after { content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #b6c0b7; transition: transform .2s, background .2s; }
+.focus-notification.on i { background: #8da992; }
+.focus-notification.on i::after { transform: translateX(14px); background: #eff4eb; }
+.focus-start { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; margin-top: 22px; padding: 13px 16px; border: 0; border-radius: 16px; background: #dce9df; color: #17241f; font-size: 14px; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); transition: background .18s, transform .18s; }
+.focus-start:hover { background: #edf3eb; }
+.focus-start:active { transform: scale(.98); }
+.focus-start .icon { width: 17px; height: 17px; }
+.focus-start kbd { margin-left: auto; font: 11px "Avenir Next", sans-serif; opacity: .62; }
+.focus-start .icon + span { margin-right: auto; }
+.focus-boundary { margin: 14px 0 0; color: var(--focus-soft); font-size: 12px; line-height: 1.7; text-align: center; }
+.focus-running { padding: 0 28px 30px; text-align: center; }
+.focus-orbit { position: relative; width: 240px; height: 240px; margin: 0 auto; }
+.focus-orbit svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.focus-orbit circle { fill: none; stroke-width: 1.6; }
+.orbit-track { stroke: rgba(230, 240, 231, .12); }
+.orbit-value { stroke: #c9ddce; stroke-linecap: round; stroke-dasharray: 326.726; stroke-dashoffset: 326.726; transition: stroke-dashoffset .2s linear; }
+.orbit-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.focus-phase { color: var(--focus-soft); font-size: 13px; letter-spacing: .13em; }
+.focus-remaining { margin-top: 12px; font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 51px; font-weight: 300; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.focus-cycle { margin-top: 10px; color: var(--focus-soft); font-size: 12px; }
+.running-task { max-width: 34ch; margin: 20px auto 24px; color: var(--focus-text); font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+.focus-controls { display: grid; grid-template-columns: 1fr 1.6fr; gap: 10px; }
+.focus-controls button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border: 1px solid rgba(237, 248, 239, .16); border-radius: 15px; background: transparent; color: var(--focus-text); font-size: 13px; transition: background .18s, transform .18s; }
+.focus-controls button:hover { background: rgba(237, 248, 239, .09); }
+.focus-controls button:active { transform: scale(.97); }
+.focus-controls .focus-pause { border-color: transparent; background: #dce9df; color: #17241f; font-weight: 600; }
+.focus-controls .focus-pause:hover { background: #edf3eb; }
+.focus-controls .icon { width: 16px; height: 16px; }
+.focus-return-note { margin: 16px 0 0; color: #e5ceb7; font-size: 12px; line-height: 1.7; }
+.focus-review { padding-top: 24px; text-align: center; }
+.review-mark { display: grid; place-items: center; width: 62px; height: 62px; margin: 0 auto 24px; border: 1px solid rgba(207, 231, 212, .34); border-radius: 50%; background: rgba(200, 225, 205, .09); color: #cfe2d3; }
+.review-mark .icon { width: 26px; height: 26px; }
+.focus-review h2 { margin: 12px 0; font-family: Georgia, "Songti SC", serif; font-size: 28px; font-weight: 400; }
+.review-copy { max-width: 32ch; margin: 0 auto; color: var(--focus-soft); font-size: 14px; line-height: 1.8; }
+
+@media (max-width: 700px) {
+  .focus-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 24px; }
+  .focus-header { padding: 22px 20px 18px; }
+  .focus-header h1 { font-size: 21px; }
+  .focus-setup, .focus-review { padding: 4px 20px 22px; }
+  .focus-running { padding: 0 20px 24px; }
+  .focus-orbit { width: min(220px, 56vw); height: min(220px, 56vw); }
+}
+@media (max-height: 620px) and (orientation: landscape) {
+  .focus-dialog { width: min(700px, calc(100vw - 32px)); }
+  .focus-header { padding: 16px 22px 12px; }
+  .focus-header h1 { font-size: 18px; }
+  .focus-running { display: grid; grid-template-columns: 180px 1fr; align-items: center; gap: 8px 24px; padding: 0 24px 20px; text-align: left; }
+  .focus-running[hidden] { display: none; }
+  .focus-orbit { grid-row: 1 / 4; width: 170px; height: 170px; }
+  .focus-remaining { font-size: 38px; }
+  .running-task { margin: 0; }
+  .focus-return-note { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .focus-dialog[open] { animation: none; } .orbit-value { transition: none; } }

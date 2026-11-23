@@ -1,0 +1,91 @@
+.weather-fx {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.topbar, .desktop-footer { z-index: 6; }
+/* Reuse the volume already painted into the sky as a soft foreground veil. */
+body[data-theme='sky'][data-weather='cloudy'] .cloud-volume[hidden] {
+  display: block;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: .32;
+  mask-image: linear-gradient(to bottom, transparent 12%, #000 30%, #000 48%, transparent 64%);
+}
+.seconds:not(:empty)::before { content: ':'; margin-right: .18em; opacity: .6; }
+.seconds { font-variant-numeric: tabular-nums; }
+.seconds-display { margin-top: 26px; }
+.seconds-display .clock-progress {
+  width: clamp(140px, 15vw, 230px);
+  max-width: 100%;
+  height: 2px;
+  margin-top: 0;
+  opacity: 1;
+  overflow: visible;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+body[data-theme='studio'] .seconds-display .clock-progress { opacity: 1; }
+.clock-progress i {
+  position: relative;
+  height: 100%;
+  opacity: .88;
+  transition: transform .2s linear;
+}
+.clock-progress i::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  right: -1px;
+  top: -1px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px color-mix(in srgb, currentColor 20%, transparent);
+}
+.seconds-caption {
+  display: block;
+  margin-top: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .16em;
+  opacity: .82;
+}
+.focus-progress {
+  height: 2px;
+  width: 160px;
+  margin: 12px auto 0;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+.focus-progress i { display:block; height:100%; background:currentColor; transform-origin:left; }
+body[data-theme='studio'] .focus-progress,
+body[data-theme='window'] .focus-progress,
+body[data-theme='editorial'] .focus-progress { margin-left: 0; }
+body[data-position='center'] .focus-progress { margin-left:auto; margin-right:auto; }
+body[data-position='right'] .focus-progress { margin-left:auto; margin-right:0; }
+body[data-position='left'] .focus-progress { margin-left:0; margin-right:auto; }
+
+body[data-theme='sky'] .clock-time,
+body[data-theme='window'] .clock-time { text-shadow: 0 2px 24px rgba(4,18,32,.14); }
+body[data-theme='studio'] .clock-time { text-shadow: 0 1px 0 rgba(255,255,255,.2), 0 5px 14px rgba(46,37,27,.08); }
+.preview-sky, .preview-window {
+  background: linear-gradient(rgba(15,34,55,.18),rgba(15,34,55,.22)),url('./assets/scene-sky-v5.webp') center / cover;
+}
+.preview-studio { background: url('./assets/scene-studio-v5.webp') center / cover; }
+.preview-editorial { background: linear-gradient(rgba(9,17,27,.24),rgba(9,17,27,.24)),url('./assets/scene-editorial-v5.webp') center / cover; }
+.theme-preview .preview-orb, .theme-preview .preview-ridge { display:none; }
+.quality-note { font-size: 11px; padding-bottom: 12px; }
+@media (max-width:700px) {
+  .seconds-display { margin-top:22px; }
+  .seconds-display .clock-progress { width:140px; }
+  .seconds-caption { font-size:10px; }
+}
+@media(prefers-reduced-motion:reduce) { .clock-progress i { transition:none; } }
