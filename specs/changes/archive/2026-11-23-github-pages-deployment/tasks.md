@@ -11,13 +11,13 @@
 | T5 | 新增 `public/.nojekyll` | FR-GHP-01 | ✅ 完成 | `dist/.nojekyll` 存在 |
 | T6 | 新增 `.gitignore` 与 `.github/workflows/deploy.yml` | FR-GHP-03 | ✅ 完成 | 工作流含 configure-pages 自动开通 |
 | T7 | 本地验证：`npm run build` + `npm test` 44 项 + `npm run preview` 冒烟 | NFR-GHP-01/02 | ✅ 完成 | `npm test`：44 passed (56.2s)；preview 冒烟见 T9 前记录 |
-| T8 | git 化、首次提交、推送 `FBxiaomo/Morrow`，启用 Pages（Actions 来源），触发首次部署 | FR-GHP-03 | ⚠️ 首推完成，来源已纠正，待新部署生效 | push 成功（仓库局部 `http.version=HTTP/1.1` + `http.postBuffer` 解决链路重置）；Actions 构建与 deploy 全绿；发现站点初始来源为 main 分支根目录，**已由所有者在仓库设置中切换为 GitHub Actions**；推送本记录触发新部署使其生效 |
-| T9 | 线上验收：主页无 404、SW 注册于 `/Morrow/sw.js`、PWA 可安装、天气可用 | FR-GHP-01/02 | ☐ 未开始 | 待 Pages 来源修复后执行 |
+| T8 | git 化、首次提交、推送 `FBxiaomo/Morrow`，启用 Pages（Actions 来源），触发首次部署 | FR-GHP-03 | ✅ 完成 | push 成功（仓库局部 `http.version=HTTP/1.1` + `http.postBuffer` 抗链路重置）；deploy #2 全绿（所有者已将 Pages 来源切为 GitHub Actions，本次推送生效） |
+| T9 | 线上验收：主页无 404、SW 注册于 `/Morrow/sw.js`、PWA 可安装、天气可用 | FR-GHP-01/02 | ✅ 完成 | 线上核实：`/Morrow/` 返回构建版 HTML（`./assets/index-CSnXhC3K.js`）；`/Morrow/sw.js` 为相对路径版；manifest `start_url:"./"`；SVG 图标与 JS 主体可达；HTTPS 满足 PWA 条件，天气走浏览器直连 Open-Meteo |
 
 ## 完成门禁（全部满足才算完成）
 
-- [ ] `npm run build` 全绿（tsc 含遗留模块）
-- [ ] `npm test` 44 项全绿
-- [ ] 版本三处同步不涉及（不发布新版本，保持 0.2.1）
-- [ ] 规格增量合并进 `specs/capabilities/offline-pwa/spec.md`（部署渠道与路径约定）
-- [ ] 本提案目录移入 `changes/archive/<日期>-<slug>/`
+- [x] `npm run build` 全绿（tsc 含遗留模块）
+- [x] `npm test` 44 项全绿
+- [x] 版本三处同步不涉及（不发布新版本，保持 0.2.1）
+- [x] 规格增量合并进 `specs/capabilities/offline-pwa/spec.md`（FR-PWA-01/02 与设计约束已修订为相对路径 + 部署渠道记载）
+- [x] 本提案目录移入 `changes/archive/2026-11-23-github-pages-deployment/`
