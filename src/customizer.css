@@ -1,32 +1,32 @@
-/* Native modal keeps keyboard focus inside the active settings. */
+/* Non-modal dock: the page behind stays visible and interactive while settings are open. */
 .customizer {
   --text:#eaece8;
   --soft:#8d9696;
   --border:#303a3b;
   position:fixed;
-  inset:0;
-  margin:auto;
-  width:min(880px,calc(100vw - 48px));
-  max-height:min(800px,calc(100dvh - 64px));
+  top:0;
+  right:0;
+  bottom:0;
+  left:auto;
+  margin:0;
+  width:min(420px,100vw);
+  height:100dvh;
   padding:0;
   color:var(--text);
   background:rgba(22,30,32,.97);
   border:1px solid rgba(227,238,229,.15);
-  border-radius:22px;
+  border-right:0;
+  border-radius:22px 0 0 22px;
   box-shadow:0 30px 120px rgba(0,0,0,.3);
   overflow:hidden;
   color-scheme:dark;
-  user-select:auto
+  user-select:auto;
+  z-index:60
 }
 
 .customizer[open] {
   display:flex;
   flex-direction:column
-}
-
-.customizer::backdrop {
-  background:rgba(5,14,23,.36);
-  backdrop-filter:blur(7px)
 }
 
 .customizer-header {
@@ -401,7 +401,7 @@
   font-variant-numeric:tabular-nums
 }
 
-.setting-row select,.setting-row input[type='text'],.city-search input {
+.setting-row input[type='text'],.city-search input {
   padding:8px 10px;
   border-radius:5px;
   border:1px solid var(--border);
@@ -414,10 +414,6 @@
 
 .setting-row input[type='text'] {
   width:210px
-}
-
-.setting-row select {
-  min-width:130px
 }
 
 .setting-row input[type='color'] {
@@ -456,6 +452,36 @@
 .switch.on:after {
   background:#f0f3e9;
   transform:translateX(13px)
+}
+
+.segment {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px
+}
+
+.segment-option {
+  min-height:40px;
+  padding:8px 14px;
+  border-radius:5px;
+  border:1px solid var(--border);
+  background:#1c2728;
+  color:#9aa8a1;
+  font-size:11px;
+  white-space:nowrap;
+  transition:background .2s,color .2s,border-color .2s
+}
+
+.segment-option:hover {
+  background:#263334;
+  border-color:#52635a
+}
+
+.segment-option.selected {
+  background:#c3d4bf;
+  border-color:#c3d4bf;
+  color:#1b2c23
 }
 
 .disabled {
@@ -583,5 +609,101 @@
 .toast.visible {
   opacity:1;
   transform:translate(-50%,0)
+}
+
+.city-picker {
+  margin-top:14px
+}
+
+.city-picker-form input {
+  width:100%;
+  padding:8px 10px;
+  border-radius:5px;
+  border:1px solid var(--border);
+  background:#1c2728;
+  color:#d0d8d1;
+  font-size:12px;
+  outline-offset:2px
+}
+
+.city-picker-results {
+  margin-top:8px
+}
+
+.city-picker-results .city-result {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:40px
+}
+
+.city-result-time {
+  color:#96a69e;
+  font-variant-numeric:tabular-nums
+}
+
+.city-result-joined {
+  font-size:11px;
+  color:#7e9185
+}
+
+.city-chips {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 2px;
+  padding:0;
+  list-style:none
+}
+
+.city-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:0 0 0 12px;
+  min-height:40px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:#1c2728;
+  color:#d0d8d1;
+  font-size:12px
+}
+
+.city-chip.invalid {
+  border-color:#8a5a3b;
+  color:#eec9ae
+}
+
+.chip-remove {
+  align-self:stretch;
+  width:40px;
+  min-height:40px;
+  border:0;
+  border-radius:0 999px 999px 0;
+  background:transparent;
+  color:#96a69e;
+  font-size:14px;
+  cursor:pointer
+}
+
+.chip-remove:hover {
+  background:#2c3a35;
+  color:#e6ece4
+}
+
+.city-picker-status {
+  margin:10px 0 2px;
+  font-size:12px;
+  line-height:1.7;
+  color:var(--soft)
+}
+
+.city-picker-status.ok {
+  color:#b9d6c2
+}
+
+.city-picker-status.error {
+  color:#eec9ae
 }
 

@@ -25,6 +25,19 @@ const LUNAR_FMT = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
   day: 'numeric',
 });
 
+const zoneFmtCache = new Map<string, { lunar: Intl.DateTimeFormat; gregorian: Intl.DateTimeFormat }>();
+function zoneFormatters(zone: string) {
+  let cached = zoneFmtCache.get(zone);
+  if (!cached) {
+    cached = {
+      lunar: new Intl.DateTimeFormat('zh-CN-u-ca-chinese', { year: 'numeric', month: 'long', day: 'numeric', timeZone: zone }),
+      gregorian: new Intl.DateTimeFormat('en', { timeZone: zone, year: 'numeric', month: 'numeric', day: 'numeric' }),
+    };
+    zoneFmtCache.set(zone, cached);
+  }
+  return cached;
+}
+
 const TERM_NAMES = [
   '小寒', '大寒', '立春', '雨水', '惊蛰', '春分', '清明', '谷雨',
   '立夏', '小满', '芒种', '夏至', '小暑', '大暑', '立秋', '处暑',
@@ -56,13 +69,14 @@ function dayCn(n: number): string {
 const SYNODIC = 29.530588853;
 const REF_NEW_MOON = Date.UTC(2000, 0, 6, 18, 14);
 
-export function lunarInfo(date: Date = new Date()): LunarInfo {
+export function lunarInfo(date: Date = new Date(), zone?: string): LunarInfo {
   // 农历月与日
   let yearName = '';
   let month = '';
   let dayNum = date.getDate();
   try {
-    for (const p of LUNAR_FMT.formatToParts(date)) {
+    const fmt = zone ? zoneFormatters(zone).lunar : LUNAR_FMT;
+    for (const p of fmt.formatToParts(date)) {
       const t = p.type as string;
       if (t === 'yearName') yearName = p.value;
       else if (t === 'month') month = p.value;
@@ -72,10 +86,20 @@ export function lunarInfo(date: Date = new Date()): LunarInfo {
     // Intl 中文日历不可用时降级：只显示公历，农历行留空
   }
 
-  // 节气：每月两个（n = (月-1)*2 与 +1）
-  const m = date.getMonth();
-  const y = date.getFullYear();
-  const d = date.getDate();
+  // 节气：每月两个（n = (月-1)*2 与 +1），按目标时区的公历年月日取值
+  let m = date.getMonth();
+  let y = date.getFullYear();
+  let d = date.getDate();
+  if (zone) {
+    try {
+      for (const p of zoneFormatters(zone).gregorian.formatToParts(date)) {
+        const n = parseInt(p.value, 10);
+        if (p.type === 'year' && Number.isFinite(n)) y = n;
+        else if (p.type === 'month' && Number.isFinite(n)) m = n - 1;
+        else if (p.type === 'day' && Number.isFinite(n)) d = n;
+      }
+    } catch { /* Intl 时区不可用时按本机字段判断 */ }
+  }
   let term: string | null = null;
   const n1 = m * 2;
   if (termDay(y, n1) === d) term = TERM_NAMES[n1];

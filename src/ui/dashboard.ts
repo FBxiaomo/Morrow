@@ -6,6 +6,19 @@ import { pomodoro } from '../data/pomodoro';
 import { formatCityTime, parseCities, resolveCity } from '../data/cities';
 import { icon } from './icons';
 
+const zoneFmtCache = new Map<string, { clock: Intl.DateTimeFormat; date: Intl.DateTimeFormat }>();
+function zoneFormatters(zone: string) {
+    let cached = zoneFmtCache.get(zone);
+    if (!cached) {
+        cached = {
+            clock: new Intl.DateTimeFormat('zh-CN', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }),
+            date: new Intl.DateTimeFormat('zh-CN', { timeZone: zone, month: 'long', day: 'numeric', weekday: 'long' }),
+        };
+        zoneFmtCache.set(zone, cached);
+    }
+    return cached;
+}
+
 export class Dashboard {
     readonly root = document.createElement('main');
     private info: WeatherInfo | null = null;
@@ -89,7 +102,7 @@ export class Dashboard {
         location.hidden = !this.store.get<boolean>('weather.show');
         this.el('.mode-label').textContent = manual ? '自选天气' : this.info ? '天气联动' : '本地昼夜';
         this.el('.weather-stats').textContent = !this.store.get('weather.show') ? '' : manual ? '当前为视觉预览，不代表实时天气' : this.info
-            ? `${Number.isFinite(this.info.feelsLike) ? '体感 ' + this.info.feelsLike + '°　' : ''}${Number.isFinite(this.info.wind) ? '风速 ' + this.info.wind + ' km/h　' : ''}${Number.isFinite(this.info.humidity) ? '湿度 ' + this.info.humidity + '%　' : ''}${new Date(this.info.observedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 更新`
+            ? `${Number.isFinite(this.info.feelsLike) ? '体感 ' + this.info.feelsLike + '°　' : ''}${this.info.windText ? '风力 ' + this.info.windText + '　' : ''}${Number.isFinite(this.info.humidity) ? '湿度 ' + this.info.humidity + '%　' : ''}${new Date(this.info.observedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })} 更新`
             : this.weather.status;
         this.lastMinute = '';
         this.tick();
@@ -104,7 +117,19 @@ export class Dashboard {
     tick() {
         pomodoro.tick();
         const now = new Date(), format = this.store.get('content.format');
-        const h = now.getHours(), hh = String(format === '12' ? (h % 12 || 12) : h).padStart(2, '0'), mm = String(now.getMinutes()).padStart(2, '0');
+        const zone = this.store.get<string>('content.clockZone') !== 'auto' ? this.store.get<string>('content.clockZone') : '';
+        let h = now.getHours(), mm = String(now.getMinutes()).padStart(2, '0');
+        let zoneFmt: { clock: Intl.DateTimeFormat; date: Intl.DateTimeFormat } | null = null;
+        if (zone) {
+            try {
+                zoneFmt = zoneFormatters(zone);
+                const parts = zoneFmt.clock.formatToParts(now);
+                const zoneHour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '', 10);
+                const zoneMinute = parts.find(p => p.type === 'minute')?.value ?? '';
+                if (Number.isFinite(zoneHour) && zoneMinute) { h = zoneHour; mm = zoneMinute.padStart(2, '0'); }
+            } catch { zoneFmt = null; /* 白名单时区异常时按本机时间继续 */ }
+        }
+        const hh = String(format === '12' ? (h % 12 || 12) : h).padStart(2, '0');
         const secondsStyle = this.store.get<string>('content.secondsStyle');
         const showDigits = secondsStyle === 'digits' || secondsStyle === 'both';
         const secondText = showDigits ? String(now.getSeconds()).padStart(2, '0') : '';
@@ -117,10 +142,13 @@ export class Dashboard {
         this.el('.seconds-caption').textContent = secondsStyle === 'both' ? 'SECONDS' : `${String(now.getSeconds()).padStart(2, '0')} / 60`;
         if (geometryChanged) window.dispatchEvent(new Event('clock-layoutchange'));
         this.el('.period').textContent = format === '12' ? (h < 12 ? 'AM' : 'PM') : '';
-        if (this.lastMinute !== `${hh}:${mm}`) {
-            this.lastMinute = `${hh}:${mm}`;
-            this.el('.clock-date').textContent = this.store.get('content.date') ? new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now) : '';
-            const lunar = lunarInfo(now);
+        if (this.lastMinute !== `${zone || 'auto'}:${hh}:${mm}`) {
+            this.lastMinute = `${zone || 'auto'}:${hh}:${mm}`;
+            this.el('.clock-date').textContent = this.store.get('content.date')
+                ? zoneFmt ? zoneFmt.date.format(now)
+                    : new Intl.DateTimeFormat('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' }).format(now)
+                : '';
+            const lunar = lunarInfo(now, zoneFmt ? zone : undefined);
             this.el('.clock-lunar').textContent = this.store.get('content.lunar') ? lunarText(lunar) + (lunar.term ? ' · ' + lunar.term : '') : '';
             this.el('.meta-separator').hidden = !this.store.get('content.date') || !this.store.get('content.lunar');
             const world = this.el('.world-clocks');

@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-27T17:24:18+08:00'));
   await page.route('https://**/*open-meteo.com/**', route => route.abort());
+  await page.route('https://**/*uapis.cn/**', route => route.abort());
   await page.goto('/');
   await page.waitForFunction(() => !!window.desktop);
 });

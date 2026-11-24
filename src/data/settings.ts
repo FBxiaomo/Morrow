@@ -1,4 +1,6 @@
 /** Schema-driven settings with explicit local persistence feedback. */
+import { CLOCK_ZONE_OPTIONS } from './cities';
+
 export type SettingValue = number | boolean | string;
 export type SettingSchema = {
     key: string;
@@ -17,6 +19,12 @@ export type SettingSchema = {
     key: string;
     label: string;
     kind: 'select';
+    options: { value: string; label: string }[];
+    default: string;
+} | {
+    key: string;
+    label: string;
+    kind: 'segment';
     options: { value: string; label: string }[];
     default: string;
 } | {
@@ -101,7 +109,7 @@ export class SettingsStore {
                 ? Math.min(schema.max, Math.max(schema.min, Math.round(value / schema.step) * schema.step)) : schema.default;
         }
         if (schema.kind === 'toggle') return typeof value === 'boolean' ? value : schema.default;
-        if (schema.kind === 'select') return schema.options.some(option => option.value === value) ? value as string : schema.default;
+        if (schema.kind === 'select' || schema.kind === 'segment') return schema.options.some(option => option.value === value) ? value as string : schema.default;
         if (schema.kind === 'color') return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : schema.default;
         return typeof value === 'string' ? value : schema.default;
     }
@@ -125,12 +133,15 @@ export class SettingsStore {
 export const FONT_STACKS: Record<string, string> = {
     smiley: '"Smiley Sans", "PingFang SC", "Microsoft YaHei", sans-serif',
     system: 'system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
-    light: '"Avenir Next", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif',
-    rounded: '"Avenir Next Rounded", "Trebuchet MS", "PingFang SC", sans-serif',
-    display: '"Arial Black", "Impact", "PingFang SC", sans-serif',
-    serif: '"Didot", "Bodoni MT", "Playfair Display", "Cormorant Garamond", "Georgia", "Songti SC", serif',
-    sans: '"Avenir Next", "Helvetica Neue", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
+    light: '"Josefin Sans", "Avenir Next", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif',
+    rounded: '"Quicksand", "Avenir Next Rounded", "Trebuchet MS", "PingFang SC", sans-serif',
+    display: '"Bebas Neue", "Arial Black", "Impact", "PingFang SC", sans-serif',
+    serif: '"Didot", "Bodoni MT", "Cormorant Garamond", "Georgia", "Songti SC", serif',
+    playfair: '"Playfair Display", "Didot", "Bodoni MT", "Georgia", "Songti SC", serif',
+    sans: '"Barlow Condensed", "Avenir Next", "Helvetica Neue", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif',
     mono: '"JetBrains Mono", "Cascadia Code", "Consolas", "Menlo", monospace',
+    pixel: '"Fusion Pixel 12px Proportional zh_hans", "JetBrains Mono", "Cascadia Code", monospace',
+    kuaile: '"ZCOOL KuaiLe", "PingFang SC", "Microsoft YaHei", sans-serif',
 };
 
 export const GLOBAL_SETTINGS: SettingSchema[] = [
@@ -144,24 +155,29 @@ export const GLOBAL_SETTINGS: SettingSchema[] = [
     { key: 'background.blur', label: '背景模糊', kind: 'slider', min: 0, max: 20, step: 1, default: 0 },
     { key: 'content.seconds', label: '显示秒数（旧版）', kind: 'toggle', default: false },
     { key: 'content.secondsStyle', label: '秒的显示', kind: 'select', options: [{ value: 'off', label: '不显示' }, { value: 'digits', label: '数字秒数' }, { value: 'bar', label: '秒进度条' }, { value: 'both', label: '数字 + 进度条' }], default: 'bar' },
-    { key: 'weather.quality', label: '天气画质', kind: 'select', options: [{ value: 'light', label: '轻量 · 日常常驻' }, { value: 'realistic', label: '写实 · 细节与互动' }], default: 'light' },
+    { key: 'weather.quality', label: '天气画质', kind: 'segment', options: [{ value: 'light', label: '轻量 · 日常常驻' }, { value: 'realistic', label: '写实 · 细节与互动' }], default: 'light' },
     { key: 'weather.wetClock', label: '雨雪与数字互动', kind: 'toggle', default: true },
     { key: 'weather.glass', label: '前景玻璃水滴', kind: 'toggle', default: true },
-    { key: 'weather.mode', label: '天气来源', kind: 'select', options: [{ value: 'live', label: '真实天气' }, { value: 'manual', label: '自选天气' }], default: 'live' },
+    { key: 'weather.mode', label: '天气来源', kind: 'segment', options: [{ value: 'live', label: '真实天气' }, { value: 'manual', label: '自选天气' }], default: 'live' },
     { key: 'weather.manual', label: '自选天气', kind: 'select', options: [{ value: 'clear', label: '晴天' }, { value: 'cloudy', label: '多云' }, { value: 'overcast', label: '阴天' }, { value: 'rain', label: '下雨' }, { value: 'snow', label: '下雪' }, { value: 'fog', label: '雾天' }, { value: 'thunder', label: '雷雨' }], default: 'clear' },
     { key: 'weather.daytime', label: '天空时段', kind: 'select', options: [{ value: 'auto', label: '跟随昼夜' }, { value: 'day', label: '白昼' }, { value: 'dusk', label: '日落' }, { value: 'night', label: '夜晚' }], default: 'auto' },
+    { key: 'weather.apiKey', label: 'uapis API Key', kind: 'text', default: '' },
+    { key: 'weather.intensityAuto', label: '强度自动调节', kind: 'toggle', default: false },
     { key: 'weather.intensity', label: '天气强度', kind: 'slider', min: 10, max: 100, step: 5, default: 65 },
     { key: 'weather.lightning', label: '闪电效果', kind: 'toggle', default: true },
     { key: 'appearance.exposure', label: '曝光', kind: 'slider', min: 0.3, max: 1.2, step: 0.01, default: 0.72 },
     { key: 'appearance.font', label: '字体', kind: 'select', options: [
         { value: 'smiley', label: '得意黑 · Smiley Sans' }, { value: 'system', label: '跟随系统' },
         { value: 'light', label: '轻盈 · Light' }, { value: 'serif', label: '衬线' },
-        { value: 'sans', label: '无衬线' }, { value: 'mono', label: '等宽' },
-        { value: 'rounded', label: '圆润' }, { value: 'display', label: '粗体 · Display' },
+        { value: 'playfair', label: '优雅衬线 · Playfair' }, { value: 'sans', label: '无衬线' },
+        { value: 'mono', label: '等宽' }, { value: 'rounded', label: '圆润' },
+        { value: 'display', label: '粗体 · Display' }, { value: 'pixel', label: '点阵 · 像素' },
+        { value: 'kuaile', label: '快乐体 · 站酷' },
     ], default: 'serif' },
     { key: 'appearance.fontCustom', label: '本机字体', kind: 'text', default: '' },
     { key: 'appearance.quiet', label: '夜间调暗', kind: 'toggle', default: false },
-    { key: 'content.format', label: '制式', kind: 'select', options: [{ value: '24', label: '24 小时' }, { value: '12', label: '12 小时' }], default: '24' },
+    { key: 'content.format', label: '制式', kind: 'segment', options: [{ value: '24', label: '24 小时' }, { value: '12', label: '12 小时' }], default: '24' },
+    { key: 'content.clockZone', label: '主时钟时区', kind: 'select', options: [{ value: 'auto', label: '跟随本机' }, ...CLOCK_ZONE_OPTIONS], default: 'auto' },
     { key: 'content.date', label: '显示日期', kind: 'toggle', default: true },
     { key: 'content.world', label: '世界时钟', kind: 'toggle', default: true },
     { key: 'content.cities', label: '城市列表', kind: 'text', default: '东京,伦敦,纽约' },

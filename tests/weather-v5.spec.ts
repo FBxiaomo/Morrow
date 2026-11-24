@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-28T12:08:36+08:00'));
   await page.route('https://**/*open-meteo.com/**', route => route.abort());
+  await page.route('https://**/*uapis.cn/**', route => route.abort());
   await page.goto('/');
   await page.waitForFunction(() => window.desktop?.landscape.diagnostics.sceneReady);
 });
@@ -167,7 +168,7 @@ test('realistic rain and snow follow font, theme and viewport changes without ru
     }
   }
   await page.evaluate(() => window.desktop.customizer.open('weather'));
-  await page.getByLabel('天气画质', { exact: true }).selectOption('light');
+  await page.locator('.segment[data-setting="weather.quality"]').getByRole('button', { name: '轻量 · 日常常驻' }).click();
   await expect(page.locator('.weather-fx')).toHaveCount(0);
   await expect(page.getByLabel('雨雪与数字互动', { exact: true })).toBeDisabled();
   expect(errors).toEqual([]);

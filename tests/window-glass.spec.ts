@@ -13,6 +13,7 @@ async function rainyWindow(page: Page, still = false) {
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-28T12:08:36+08:00'));
   await page.route('https://**/*open-meteo.com/**', route => route.abort());
+  await page.route('https://**/*uapis.cn/**', route => route.abort());
   await page.goto('/');
   await page.waitForFunction(() => window.desktop?.landscape.diagnostics.sceneReady);
 });

@@ -1,6 +1,6 @@
 {
   "name": "morrow",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "末时钟 · 天气氛围与专注时钟",

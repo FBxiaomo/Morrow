@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
     await page.route('https://**/*open-meteo.com/**', route => route.abort());
+    await page.route('https://**/*uapis.cn/**', route => route.abort());
     await page.goto('/');
     await page.waitForFunction(() => !!window.desktop);
 });
@@ -67,36 +68,131 @@ test('settings panel is opaque enough that the clock cannot bleed through', asyn
     expect(alpha.solidAlpha).toBeGreaterThanOrEqual(0.9);
 });
 
-test('unresolvable cities are explained in settings and on the clock', async ({ page }) => {
-    await page.evaluate(() => window.desktop.customizer.open('content'));
-    const input = page.locator('[data-setting="content.cities"]');
-
-    await input.fill('东京,火星基地');
-    const warning = page.locator('.city-validation');
-    await expect(warning).toHaveClass(/error/);
-    await expect(warning).toContainText('火星基地');
-    await expect(warning).toContainText('城市未收录');
-
-    await input.fill('东京,伦敦');
-    await expect(warning).toHaveClass(/ok/);
-    await expect(warning).not.toContainText('未收录');
-
-    await input.fill('Europe/Berlin');
-    await expect(warning).toHaveClass(/ok/);
-
-    await input.fill('Mars/Olympus');
-    await expect(warning).toContainText('时区名称不存在');
-
-    // The clock explains the failure instead of showing an empty "--:--".
+test('unresolvable cities are explained on chips and on the clock', async ({ page }) => {
     await page.evaluate(() => {
         window.desktop.store.set('content.cities', '东京,火星基地');
         window.desktop.store.set('content.world', true);
-        window.desktop.customizer.close();
+        window.desktop.customizer.open('content');
     });
+    // Settings: the bad entry becomes an error chip with the reason on hover.
+    const badChip = page.locator('.city-chip.invalid');
+    await expect(badChip).toHaveCount(1);
+    await expect(badChip).toContainText('火星基地');
+    expect(await badChip.getAttribute('title')).toContain('城市未收录');
+    await expect(page.locator('.city-picker-status')).toContainText('城市未收录');
+
+    // The clock explains the failure instead of showing an empty "--:--".
+    await page.evaluate(() => window.desktop.customizer.close());
     const invalid = page.locator('.world-clocks > div.invalid');
     await expect(invalid).toHaveCount(1);
     await expect(invalid).toContainText('城市未收录');
     expect(await invalid.getAttribute('title')).toContain('IANA');
+});
+
+test('city picker adds, blocks duplicates and removes joined cities', async ({ page }) => {
+    await page.evaluate(() => {
+        window.desktop.store.set('content.cities', '东京,伦敦,纽约');
+        window.desktop.store.set('content.world', true);
+        window.desktop.customizer.open('content');
+    });
+    const input = page.locator('.city-picker-form input');
+    await expect(input).toBeVisible();
+
+    // Chinese-name search hits and click-to-add.
+    await input.fill('巴黎');
+    const option = page.locator('.city-picker-results .city-result', { hasText: '巴黎' });
+    await expect(option).toBeVisible();
+    await option.click();
+    await expect(page.locator('.city-chip', { hasText: '巴黎' })).toBeVisible();
+    expect(await page.evaluate(() => window.desktop.store.get('content.cities'))).toBe('东京,伦敦,纽约,巴黎');
+
+    // English aliases match too; an already-joined city is offered disabled.
+    await input.fill('london');
+    await expect(page.locator('.city-picker-results .city-result', { hasText: '伦敦' })).toBeDisabled();
+
+    // Search results and remove buttons stay reachable (touch targets >= 40px, copy >= 11px).
+    const sizes = await page.locator('.city-picker-results .city-result').first().evaluate(el => ({
+        height: el.getBoundingClientRect().height, font: parseFloat(getComputedStyle(el).fontSize),
+    }));
+    expect(sizes.height).toBeGreaterThanOrEqual(40);
+    expect(sizes.font).toBeGreaterThanOrEqual(11);
+
+    // Removal updates the store and the desktop immediately.
+    await page.locator('.city-chip', { hasText: '伦敦' }).locator('.chip-remove').click();
+    expect(await page.evaluate(() => window.desktop.store.get('content.cities'))).toBe('东京,纽约,巴黎');
+    await expect(page.locator('.world-clocks > div')).toHaveCount(3);
+});
+
+test('city picker enforces the five-city cap', async ({ page }) => {
+    await page.evaluate(() => {
+        window.desktop.store.set('content.cities', '东京,伦敦,纽约,巴黎,香港');
+        window.desktop.customizer.open('content');
+    });
+    const input = page.locator('.city-picker-form input');
+    await expect(input).toBeDisabled();
+    await expect(input).toHaveAttribute('placeholder', /上限/);
+
+    await page.locator('.city-chip', { hasText: '香港' }).locator('.chip-remove').click();
+    await expect(input).toBeEnabled();
+});
+
+test('city picker falls back to IANA zones and explains unresolvable input', async ({ page }) => {
+    await page.evaluate(() => {
+        window.desktop.store.set('content.cities', '东京');
+        window.desktop.customizer.open('content');
+    });
+    const input = page.locator('.city-picker-form input');
+    const status = page.locator('.city-picker-status');
+
+    // Typing an IANA zone offers the Enter fallback and lands as the canonical city name.
+    await input.fill('Europe/Berlin');
+    await input.press('Enter');
+    await expect(page.locator('.city-chip', { hasText: '柏林' })).toBeVisible();
+    expect(await page.evaluate(() => window.desktop.store.get('content.cities'))).toBe('东京,柏林');
+
+    // Unresolvable input explains itself and leaves the list untouched.
+    await input.fill('Mars/Olympus');
+    await input.press('Enter');
+    await expect(status).toContainText('时区名称不存在');
+    expect(await page.evaluate(() => window.desktop.store.get('content.cities'))).toBe('东京,柏林');
+});
+
+test('main clock follows the selected time zone end to end', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-11-24T23:30:00+08:00'));
+    await page.evaluate(() => window.desktop.store.set('content.clockZone', 'Asia/Tokyo'));
+    // Shanghai 23:30 is Tokyo 00:30 on the next day.
+    await expect(page.locator('.clock-time .hours')).toHaveText('00');
+    await expect(page.locator('.clock-time .minutes')).toHaveText('30');
+    await expect(page.locator('.clock-date')).toContainText('11月25日');
+    await expect(page.locator('.clock-date')).toContainText('星期三');
+
+    // The lunar line follows the Tokyo calendar day, not the local one.
+    const expectedLunar = await page.evaluate(() => {
+        const parts = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
+            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tokyo',
+        }).formatToParts(new Date('2026-11-24T23:30:00+08:00'));
+        const by = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+        const digits = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+        const dayCn = (n: number) => n <= 10 ? `初${digits[n - 1]}` : n < 20 ? `十${digits[n - 11]}`
+            : n === 20 ? '二十' : n < 30 ? `廿${digits[n - 21]}` : '三十';
+        return `${by('yearName')}年${by('month')}${dayCn(parseInt(by('day'), 10))}`;
+    });
+    await expect(page.locator('.clock-lunar')).toContainText(expectedLunar);
+
+    // Switching back to auto restores local time and the local date.
+    await page.evaluate(() => window.desktop.store.set('content.clockZone', 'auto'));
+    await expect(page.locator('.clock-time .hours')).toHaveText('23');
+    await expect(page.locator('.clock-date')).toContainText('11月24日');
+});
+
+test('an invalid persisted clock zone falls back to local time', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-11-24T23:30:00+08:00'));
+    await page.evaluate(() => localStorage.setItem('desktop.v2.settings', JSON.stringify({ 'content.clockZone': 'Mars/Olympus' })));
+    await page.reload();
+    await page.waitForFunction(() => !!window.desktop);
+    expect(await page.evaluate(() => window.desktop.store.get('content.clockZone'))).toBe('auto');
+    await expect(page.locator('.clock-time .hours')).toHaveText('23');
+    await expect(page.locator('.clock-date')).toContainText('11月24日');
 });
 
 test('interface copy is not set below 11px', async ({ page }) => {

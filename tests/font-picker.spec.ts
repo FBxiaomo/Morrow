@@ -1,17 +1,28 @@
 import { test, expect } from '@playwright/test';
 
-test('built-in Smiley Sans loads and remains selected after reload', async ({page}) => {
+test('built-in font cards apply instantly and keep the selection after reload', async ({page}) => {
   await page.goto('/');
   await page.evaluate(() => window.desktop.customizer.open('appearance'));
-  await page.getByLabel('字体', {exact:true}).selectOption('smiley');
+  await page.getByRole('button',{name:'字体风格 得意黑 · Smiley Sans'}).click();
   await expect(page.locator('.clock-time')).toHaveCSS('font-family', /Smiley Sans/);
   expect(await page.evaluate(async () => (await document.fonts.load('400 32px "Smiley Sans"', '12:34')).length)).toBeGreaterThan(0);
   await page.reload();
   await page.evaluate(() => window.desktop.customizer.open('appearance'));
-  await expect(page.getByLabel('字体', {exact:true})).toHaveValue('smiley');
+  await expect(page.getByRole('button',{name:'字体风格 得意黑 · Smiley Sans'})).toHaveAttribute('aria-pressed','true');
 });
 
-test('font picker reads only on click, searches beyond 300 families and clears custom overrides', async ({page}) => {
+test('Playfair ships as a bundled latin subset and survives reload', async ({page}) => {
+  await page.goto('/');
+  await page.evaluate(() => window.desktop.customizer.open('appearance'));
+  await page.getByRole('button',{name:'字体风格 优雅衬线 · Playfair'}).click();
+  await expect(page.locator('.clock-time')).toHaveCSS('font-family', /Playfair Display/);
+  expect(await page.evaluate(async () => (await document.fonts.load('400 32px "Playfair Display"', '12:34')).length)).toBeGreaterThan(0);
+  await page.reload();
+  await page.evaluate(() => window.desktop.customizer.open('appearance'));
+  await expect(page.getByRole('button',{name:'字体风格 优雅衬线 · Playfair'})).toHaveAttribute('aria-pressed','true');
+});
+
+test('local fonts load only on click, stay searchable and yield to a built-in card', async ({page}) => {
   await page.route('**/__local-fonts',route=>route.fulfill({status:404,body:''}));
   await page.addInitScript(() => {
     Object.defineProperty(window,'queryLocalFonts',{value: async () => Array.from({length:450},(_,i)=>({family:`Test Font ${String(i).padStart(3,'0')}`,fullName:`测试字体 ${i}`}))});
@@ -19,13 +30,15 @@ test('font picker reads only on click, searches beyond 300 families and clears c
   await page.goto('/');
   await page.evaluate(()=>window.desktop.customizer.open('appearance'));
   await expect(page.locator('.font-option')).toHaveCount(0);
+  await expect(page.getByLabel('手动输入字体名称')).toHaveCount(0);
   await page.getByRole('button',{name:'读取系统字体',exact:true}).click();
   await expect(page.locator('.font-read-status')).toContainText('450 个字体家族');
   await page.getByRole('searchbox',{name:'搜索系统字体'}).fill('测试字体 449');
   await page.getByRole('button',{name:'选择字体 Test Font 449',exact:true}).click();
   expect(await page.evaluate(()=>window.desktop.store.get('appearance.fontCustom'))).toBe('Test Font 449');
-  await page.getByLabel('字体',{exact:true}).selectOption('mono');
+  await page.getByRole('button',{name:'字体风格 等宽'}).click();
   expect(await page.evaluate(()=>window.desktop.store.get('appearance.fontCustom'))).toBe('');
+  expect(await page.evaluate(()=>window.desktop.store.get('appearance.font'))).toBe('mono');
 });
 
 test('font permission errors explain how to retry', async ({page}) => {

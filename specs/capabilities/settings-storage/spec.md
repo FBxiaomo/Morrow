@@ -10,8 +10,8 @@
 
 ### 校验与持久化
 
-- **FR-SS-01** 系统应以 `GLOBAL_SETTINGS` schema（37 键基线）定义全部用户设置；每个键必须带中文 label 与 kind（slider/toggle/select/color/text）。
-- **FR-SS-02** 系统应在读取时逐键校验：slider 必须为有限数并钳制到 `[min, max]` 且对齐 step；toggle 必须为布尔；select 必须在 options 白名单；color 必须匹配 `^#[0-9a-f]{6}$`；text 必须为字符串。**任何校验失败回默认值，不抛错**。
+- **FR-SS-01** 系统应以 `GLOBAL_SETTINGS` schema（38 键基线，含 `content.clockZone`）定义全部用户设置；每个键必须带中文 label 与 kind（slider/toggle/select/segment/color/text）。
+- **FR-SS-02** 系统应在读取时逐键校验：slider 必须为有限数并钳制到 `[min, max]` 且对齐 step；toggle 必须为布尔；select 与 segment 必须在 options 白名单；color 必须匹配 `^#[0-9a-f]{6}$`；text 必须为字符串。**任何校验失败回默认值，不抛错**。
 - **FR-SS-03** 如果 localStorage 中设置数据损坏（解析失败/原型污染/类型不符），系统应安全回退默认值并继续运行（有专项测试注入损坏数据）。
 - **FR-SS-04** 系统应过滤 `__proto__` 等危险键与三种合法类型之外的值，不信任任何读取结果。
 - **FR-SS-05** 设置写入即时持久化（无显式保存按钮）。
@@ -26,6 +26,7 @@
 - **FR-SS-08** 设置面板的控件应由 schema 统一生成（`group()`/`control()`），同一 `data-setting` 键不得重复出现（有测试断言）。
 - **FR-SS-09** 系统应根据设置间依赖禁用/隐藏无关控件（诚实状态）：manual 模式下禁用城市控件、视觉关闭时隐藏强度/闪电、wetClock 仅写实 + 视觉 + 非 window 主题、玻璃仅 window 主题可见等（`syncControls()` 为唯一实现点）。
 - **FR-SS-10** 设置说明与分组标题应与实际控件精确对应（「秒的显示」等字样只出现在显示页，有测试断言）。
+- **FR-SS-17** 当选项型设置仅有两个取值时，系统应将其注册为 `segment` 控件型并以并排分段按钮呈现：当前生效项高亮且 `aria-pressed="true"`、其余为 `false`，点击任一按钮立即写入并即时持久化，不渲染下拉控件（有测试断言）。当前适用键：`content.format`（24/12 制式）、`weather.quality`（轻量/写实）、`weather.mode`（真实/自选）；三个及以上选项的设置仍走下拉控件。`segment` 的取值域、默认值、存量数据与校验行为与 select 完全一致，无迁移。
 
 ### 备份（导出/导入）
 
@@ -56,6 +57,7 @@
 | FR-SS-02/03 | `desktop.spec` 损坏设置安全回退默认 |
 | FR-SS-06/07 | `release.spec` 存储写入失败可见（注入 QuotaExceededError） |
 | FR-SS-08/09/10 | `settings-glass.spec` 无重复 data-setting、分组标题精确匹配 |
+| FR-SS-17 | `settings-glass.spec` 两选项分段按钮用例（三键无下拉、aria-pressed 高亮互换、点击写入并持久化、按钮 ≥ 40px） |
 | FR-SS-11/12 | 导出/导入实现锚点（customizer.ts），随 `desktop.spec` 重置用例覆盖回退路径 |
 
 ## 未决事项

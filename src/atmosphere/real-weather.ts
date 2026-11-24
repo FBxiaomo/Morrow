@@ -12,6 +12,8 @@ export interface WeatherFrame {
   background: HTMLCanvasElement;
   refractedWindow?: boolean;
   temperature?: number;
+  /** 生效的天气强度（0–1）：live+自动档为实况推导值，否则为手动滑杆值。 */
+  intensity: number;
 }
 
 const LIMITS = { rain: 700, snow: 180, beads: 100, splashes: 240, glass: 48 };
@@ -78,7 +80,7 @@ export class RealWeatherEffects {
     if (!interaction) { this.beads = []; this.snowCaps = []; this.splashes = []; this.wetness = 0; }
     const dt = still ? 0 : Math.min(frame.dt, .05);
     this.elapsed += dt;
-    const intensity = this.store.get<number>('weather.intensity') / 100;
+    const intensity = frame.intensity;
     const rain = frame.rain * intensity, snow = frame.snow * intensity;
     const targetWet = interaction ? rain : 0;
     this.wetness = still ? targetWet : this.wetness + (targetWet - this.wetness) * Math.min(1, dt * (targetWet > this.wetness ? .8 : .18));

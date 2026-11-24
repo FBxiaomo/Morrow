@@ -168,3 +168,14 @@ body.pure-mode .clock-progress { margin-inline: auto; }
 .pure-exit kbd { font: 10px "Avenir Next", sans-serif; opacity: .65; }
 
 @font-face { font-family: 'Smiley Sans'; src: url('./assets/fonts/SmileySans-Oblique.woff2') format('woff2'); font-style: normal; font-weight: 400; font-display: swap; }
+/* Playfair Display latin subset (digits + latin) · SIL OFL 1.1, license at src/assets/fonts/Playfair-OFL.txt */
+@font-face { font-family: 'Playfair Display'; src: url('./assets/fonts/playfair-display-latin.woff2') format('woff2'); font-style: normal; font-weight: 400; font-display: swap; }
+/* Josefin Sans / Barlow Condensed / Quicksand / Bebas Neue latin subsets · SIL OFL 1.1, licenses at src/assets/fonts/ */
+@font-face { font-family: 'Josefin Sans'; src: url('./assets/fonts/josefin-sans-latin.woff2') format('woff2'); font-style: normal; font-weight: 300; font-display: swap; }
+@font-face { font-family: 'Barlow Condensed'; src: url('./assets/fonts/barlow-condensed-latin.woff2') format('woff2'); font-style: normal; font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Quicksand'; src: url('./assets/fonts/quicksand-latin.woff2') format('woff2'); font-style: normal; font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Bebas Neue'; src: url('./assets/fonts/bebas-neue-latin.woff2') format('woff2'); font-style: normal; font-weight: 400; font-display: swap; }
+/* Fusion Pixel 12px proportional zh-Hans (全中文点阵) · SIL OFL 1.1, license at src/assets/fonts/FusionPixel-OFL.txt */
+@font-face { font-family: 'Fusion Pixel 12px Proportional zh_hans'; src: url('./assets/fonts/fusion-pixel-12px-proportional-zh_hans.woff2') format('woff2'); font-style: normal; font-weight: 400; font-display: swap; }
+/* ZCOOL KuaiLe (站酷快乐体) · SIL OFL 1.1, license at src/assets/fonts/ZCOOLKuaiLe-OFL.txt */
+@font-face { font-family: 'ZCOOL KuaiLe'; src: url('./assets/fonts/zcoolkuaile-Regular.ttf') format('truetype'); font-style: normal; font-weight: 400; font-display: swap; }

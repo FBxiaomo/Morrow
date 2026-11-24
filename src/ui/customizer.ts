@@ -2,9 +2,10 @@ import { GLOBAL_SETTINGS, type SettingsStore, type SettingSchema, type SettingVa
 import { THEMES, ThemeManager, backgroundImage } from '../data/themes';
 import type { WeatherService } from '../data/weather';
 import { pomodoro } from '../data/pomodoro';
-import { parseCities, resolveCity } from '../data/cities';
+import { canonicalCityLabel, parseCities, resolveCity, searchCities } from '../data/cities';
 import { icon } from './icons';
 import { FontPicker } from './font-picker';
+import { SelectMenu } from './select-menu';
 
 export class Customizer {
     readonly dialog = document.createElement('dialog');
@@ -14,10 +15,12 @@ export class Customizer {
     private message: HTMLElement;
     private fontPicker: FontPicker;
     private toastTimer = 0;
+    private readonly menus = new Map<string, SelectMenu>();
 
     constructor(private store: SettingsStore, private themes: ThemeManager, private weather: WeatherService, private onImage: () => Promise<void>) {
         this.fontPicker = new FontPicker(store);
         this.dialog.className = 'customizer';
+        this.dialog.tabIndex = -1;
         this.dialog.setAttribute('aria-labelledby', 'customizer-title');
         this.dialog.innerHTML = `<header class="customizer-header"><div><span class="small-label">MAKE TIME YOUR OWN</span><h1 id="customizer-title">你的空间，不必相同。</h1></div><button class="icon-button close-customizer" aria-label="关闭设置">${icon('close')}</button></header><nav class="customizer-tabs" aria-label="设置分类"><button data-tab="themes">主题</button><button data-tab="appearance">外观</button><button data-tab="weather">天气</button><button data-tab="content">显示</button><button data-tab="general">通用</button></nav><div class="customizer-content"></div><footer class="customizer-footer"><div class="save-status"><span class="save-note"></span><button class="storage-retry" hidden>重试保存</button></div><button class="primary done">完成 ${icon('arrow')}</button></footer>`;
         document.body.append(this.dialog);
@@ -33,13 +36,7 @@ export class Customizer {
             this.notify(ok ? '设置已保存到这台设备' : '仍无法写入，请导出配置备份');
         });
         this.dialog.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach(btn => btn.addEventListener('click', () => { this.section = btn.dataset.tab!; this.render(); }));
-        this.dialog.addEventListener('click', e => {
-            if (e.target === this.dialog) {
-                const r = this.dialog.getBoundingClientRect();
-                if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) this.close();
-            }
-        });
-        this.dialog.addEventListener('close', () => { document.body.classList.remove('customizing'); this.previousFocus?.focus(); });
+        this.dialog.addEventListener('close', () => { document.body.classList.remove('customizing'); this.menus.forEach(menu => menu.close()); this.previousFocus?.focus(); });
         store.onChange(() => this.syncControls());
         store.onPersistenceChange(() => this.updateSaveStatus());
         weather.onChange(() => this.updateWeatherStatus());
@@ -53,7 +50,8 @@ export class Customizer {
         this.render();
         if (!this.dialog.open) {
             this.previousFocus = document.activeElement as HTMLElement;
-            this.dialog.showModal();
+            this.dialog.show();
+            this.dialog.focus();
             document.body.classList.add('customizing');
         }
     }
@@ -86,6 +84,8 @@ export class Customizer {
         document.body.dataset.customizer = this.section;
         this.dialog.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach(btn => { btn.classList.toggle('selected', btn.dataset.tab === this.section); btn.setAttribute('aria-current', btn.dataset.tab === this.section ? 'page' : 'false'); });
         const body = this.dialog.querySelector<HTMLElement>('.customizer-content')!;
+        this.menus.forEach(menu => menu.dispose());
+        this.menus.clear();
         body.replaceChildren();
         body.scrollTop = 0;
         if (this.section === 'themes') this.renderThemes(body);
@@ -123,7 +123,7 @@ export class Customizer {
         intro.className = 'section-intro';
         intro.textContent = '字体、排版、背景与动态，按模块逐项搭配。';
         body.append(intro);
-        const typography = this.group(body, '字体与字形', ['appearance.font'], '选择字体风格，或读取本机已安装的字体。');
+        const typography = this.group(body, '字体与字形', [], '选择字体风格，或读取本机已安装的字体。');
         typography.append(this.fontPicker.root);
         this.group(body, '排版与配色', ['appearance.size', 'appearance.color', 'appearance.position'], '调整时间的大小、颜色和摆放位置。');
         const background = this.group(body, '背景画面', ['background.type', 'background.color'], '主题风景、纯色、渐变或你自己的照片。');
@@ -156,13 +156,14 @@ export class Customizer {
         qualityNote.className = 'section-intro quality-note';
         const location = document.createElement('section');
         location.className = 'settings-group location-settings';
-        location.innerHTML = `<h2>城市与定位</h2><p class="module-description">搜索城市或使用当前位置，获取实际天气。</p><form class="city-search"><input name="city" autocomplete="off" placeholder="城市名，如 杭州 / London" aria-label="搜索天气城市"><button class="secondary" type="submit">搜索</button></form><div class="city-results" aria-live="polite"></div><div class="location-actions"><button class="text-button locate">${icon('pin')} 使用当前位置</button><button class="text-button refresh-weather">刷新天气</button></div><p class="weather-status" role="status"></p><small class="weather-attribution">天气数据 <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · 位置名称 <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">BigDataCloud</a> · 定位仅在点击后请求</small>`;
+        location.innerHTML = `<h2>城市与定位</h2><p class="module-description">搜索城市，或定位当前位置，获取实际天气。</p><form class="city-search"><input name="city" autocomplete="off" placeholder="城市名，如 杭州 / London" aria-label="搜索天气城市"><button class="secondary" type="submit">搜索</button></form><div class="city-results" aria-live="polite"></div><div class="location-actions"><button class="text-button locate">${icon('pin')} 使用当前位置</button><button class="text-button refresh-weather">刷新天气</button></div><p class="weather-status" role="status"></p><small class="weather-attribution">天气数据 <a href="https://uapis.cn/" target="_blank" rel="noreferrer">uapis.cn</a>（填 Key）/ <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a>（免 Key） · 位置名称 <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">BigDataCloud</a>（免 Key 定位）</small>`;
         location.querySelector('form')!.addEventListener('submit', e => { e.preventDefault(); void this.search((location.querySelector('input') as HTMLInputElement).value); });
         location.querySelector('.locate')!.addEventListener('click', () => this.locate());
         location.querySelector('.refresh-weather')!.addEventListener('click', () => void this.weather.refresh(true));
         body.append(location);
+        this.group(location, 'uapis 接入', ['weather.apiKey'], '填写自己注册的 uapis.cn API Key（uapi- 开头）以启用 uapis 实况与 IP 定位；留空时使用免 Key 的 Open-Meteo，定位改用浏览器位置。Key 只保存在本机。');
         this.group(body, this.store.get('theme') === 'studio' ? '室内采光' : '天空氛围', ['weather.manual', 'weather.daytime'], '自选天气时可自由搭配晴雨与昼夜。');
-        this.group(body, '效果与性能', ['weather.quality', 'weather.visual', 'weather.intensity'], '在视觉细节和常驻开销之间选择。');
+        this.group(body, '效果与性能', ['weather.quality', 'weather.visual', 'weather.intensityAuto', 'weather.intensity'], '在视觉细节和常驻开销之间选择；开启自动后，强度随真实天气自动调节。');
         const interaction = this.group(body, '雨雪互动', ['weather.wetClock', 'weather.glass', 'weather.lightning']);
         interaction.append(qualityNote);
         this.group(body, '声音实验', ['audio.enabled'], '麦克风律动为实验功能；音频只在本机处理，不上传录音。');
@@ -170,20 +171,10 @@ export class Customizer {
     }
 
     private renderContent(body: HTMLElement) {
-        this.group(body, '时间与秒数', ['content.format', 'content.secondsStyle'], '选择时间制式与秒数的呈现方式。');
+        this.group(body, '时间与秒数', ['content.format', 'content.secondsStyle', 'content.clockZone'], '选择时间制式与秒数的呈现方式；主时钟可切换到其他城市的时区。');
         this.group(body, '日期与月相', ['content.date', 'content.lunar', 'content.moon']);
-        const world = this.group(body, '世界时钟', ['content.world', 'content.cities'], '城市用逗号分隔；也可填写 IANA 时区，例如 Asia/Shanghai。');
-        const validation = document.createElement('p');
-        validation.className = 'city-validation';
-        validation.setAttribute('role', 'status');
-        world.append(validation);
-        const citiesInput = world.querySelector<HTMLInputElement>('[data-setting="content.cities"]');
-        if (citiesInput) {
-            citiesInput.placeholder = '东京,伦敦,纽约 或 Asia/Shanghai';
-            citiesInput.addEventListener('input', () => this.validateCities(validation, citiesInput.value));
-            citiesInput.addEventListener('change', () => this.validateCities(validation, citiesInput.value));
-        }
-        this.validateCities(validation, this.store.get<string>('content.cities'));
+        const world = this.group(body, '世界时钟', ['content.world'], '搜索城市加入列表，桌面将按时区显示各城市时间。');
+        world.append(this.buildCityPicker());
         const focus = this.group(body, '专注计时', ['focus.work', 'focus.short', 'focus.long'], '分别设置专注、短休和长休时长。主入口可编辑任务并查看完成记录。');
         const stop = document.createElement('button');
         stop.className = 'reset-button';
@@ -197,23 +188,137 @@ export class Customizer {
         body.append(note);
     }
 
-    /** Explains which entries cannot resolve, before the user leaves the field. */
-    private validateCities(target: HTMLElement, raw: string) {
-        const cities = parseCities(raw);
-        if (!cities.length) {
-            target.className = 'city-validation';
-            target.textContent = '尚未添加城市，时钟不会显示世界时钟。';
-            return;
+    /** Search-and-add city picker backed by the built-in table; Enter falls back to IANA zone names. */
+    private buildCityPicker(): HTMLElement {
+        const wrap = document.createElement('div');
+        wrap.className = 'city-picker';
+        const form = document.createElement('form');
+        form.className = 'city-picker-form';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.autocomplete = 'off';
+        input.setAttribute('aria-label', '搜索城市加入世界时钟');
+        form.append(input);
+        const results = document.createElement('div');
+        results.className = 'city-picker-results';
+        results.setAttribute('role', 'listbox');
+        results.setAttribute('aria-label', '城市搜索结果');
+        const status = document.createElement('p');
+        status.className = 'city-picker-status';
+        status.setAttribute('role', 'status');
+        wrap.append(form, results, status);
+
+        const cityList = () => parseCities(this.store.get<string>('content.cities'));
+        const say = (text: string, kind?: 'ok' | 'error') => {
+            status.className = kind ? `city-picker-status ${kind}` : 'city-picker-status';
+            status.textContent = text;
+        };
+
+        input.addEventListener('input', () => {
+            const label = input.value.trim();
+            results.replaceChildren();
+            if (!label) return;
+            const hits = searchCities(label);
+            if (!hits.length) {
+                say(`未收录「${label}」。可输入 IANA 时区名（如 Asia/Shanghai）后回车添加。`, 'error');
+                return;
+            }
+            const list = cityList();
+            for (const hit of hits) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'city-result';
+                btn.setAttribute('role', 'option');
+                const name = document.createElement('span');
+                name.className = 'city-result-name';
+                name.textContent = hit.label;
+                const time = document.createElement('span');
+                time.className = 'city-result-time';
+                time.textContent = hit.time;
+                btn.append(name, time);
+                if (list.includes(hit.label)) {
+                    const joined = document.createElement('span');
+                    joined.className = 'city-result-joined';
+                    joined.textContent = '已加入';
+                    btn.append(joined);
+                    btn.disabled = true;
+                    btn.title = '已在列表中';
+                }
+                btn.addEventListener('click', () => {
+                    const fresh = cityList();
+                    if (fresh.length >= 5) { say('已达 5 城上限，先移除一个再添加。', 'error'); return; }
+                    if (fresh.includes(hit.label)) { say(`「${hit.label}」已在列表中。`, 'error'); return; }
+                    this.store.set('content.cities', [...fresh, hit.label].join(','));
+                    input.value = '';
+                    results.replaceChildren();
+                });
+                results.append(btn);
+            }
+        });
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const label = input.value.trim();
+            if (!label) return;
+            const resolved = resolveCity(label);
+            if (!resolved.ok) { say(`「${resolved.label}」${resolved.reason}。可使用内置城市名，或 IANA 时区，例如 Asia/Shanghai。`, 'error'); return; }
+            const canonical = canonicalCityLabel(resolved.zone) ?? resolved.label;
+            const fresh = cityList();
+            if (fresh.includes(canonical)) { say(`「${canonical}」已在列表中。`, 'error'); return; }
+            if (fresh.length >= 5) { say('已达 5 城上限，先移除一个再添加。', 'error'); return; }
+            this.store.set('content.cities', [...fresh, canonical].join(','));
+            input.value = '';
+            results.replaceChildren();
+        });
+        return wrap;
+    }
+
+    /** Chips reflect the stored list on every store change: labels, reasons, cap and removal. */
+    private syncCityPicker() {
+        const picker = this.dialog.querySelector<HTMLElement>('.city-picker');
+        if (!picker) return;
+        const list = parseCities(this.store.get<string>('content.cities'));
+        const input = picker.querySelector<HTMLInputElement>('.city-picker-form input')!;
+        input.disabled = list.length >= 5;
+        input.placeholder = list.length >= 5 ? '已达 5 城上限，先移除一个再添加' : '搜索城市，如 东京 / London / Asia/Shanghai';
+        const chips = document.createElement('ul');
+        chips.className = 'city-chips';
+        chips.setAttribute('aria-label', '已加入城市');
+        list.forEach((entry, index) => {
+            const resolved = resolveCity(entry);
+            const chip = document.createElement('li');
+            chip.className = resolved.ok ? 'city-chip' : 'city-chip invalid';
+            chip.textContent = entry;
+            if (!resolved.ok) chip.title = `${resolved.label}：${resolved.reason}。可使用内置城市名，或 IANA 时区，例如 Asia/Shanghai。`;
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'chip-remove';
+            remove.setAttribute('aria-label', `移除 ${entry}`);
+            remove.textContent = '×';
+            remove.addEventListener('click', () => {
+                this.store.set('content.cities', parseCities(this.store.get<string>('content.cities')).filter((_, i) => i !== index).join(','));
+            });
+            chip.append(remove);
+            chips.append(chip);
+        });
+        const oldChips = picker.querySelector('.city-chips');
+        if (oldChips) oldChips.replaceWith(chips);
+        else picker.append(chips);
+        const status = picker.querySelector<HTMLElement>('.city-picker-status')!;
+        const bad = list.flatMap(entry => {
+            const resolved = resolveCity(entry);
+            return resolved.ok ? [] : [`「${resolved.label}」${resolved.reason}`];
+        });
+        if (!list.length) {
+            status.className = 'city-picker-status';
+            status.textContent = '尚未添加城市，时钟不会显示世界时钟。';
+        } else if (bad.length) {
+            status.className = 'city-picker-status error';
+            status.textContent = `${bad.join('；')}。可改用内置城市或 IANA 时区。`;
+        } else {
+            status.className = 'city-picker-status ok';
+            status.textContent = `已加入 ${list.length}/5 个城市，桌面将按时区显示。`;
         }
-        const resolved = cities.map(resolveCity);
-        const bad = resolved.filter(item => !item.ok);
-        if (!bad.length) {
-            target.className = 'city-validation ok';
-            target.textContent = `${resolved.map(item => item.label).join(' · ')} 已识别，将按时区显示。`;
-            return;
-        }
-        target.className = 'city-validation error';
-        target.textContent = `${bad.map(item => `「${item.label}」${item.reason}`).join('；')}。可改用内置城市或 IANA 时区。`;
     }
 
     private renderGeneral(body: HTMLElement) {
@@ -231,7 +336,7 @@ export class Customizer {
         body.append(data);
         const about = document.createElement('section');
         about.className = 'settings-group about-settings';
-        about.innerHTML = '<h2>末时钟</h2><p class="module-description">版本 0.2.1 · 天气氛围与专注时钟<br>核心界面支持离线重新打开；实时天气仍需要网络。字体不可用时自动使用清晰的系统回退。</p>';
+        about.innerHTML = '<h2>末时钟</h2><p class="module-description">版本 0.3.0 · 天气氛围与专注时钟<br>核心界面支持离线重新打开；实时天气仍需要网络。字体不可用时自动使用清晰的系统回退。</p>';
         body.append(about);
     }
 
@@ -254,25 +359,34 @@ export class Customizer {
     }
 
     private control(schema: SettingSchema) {
-        const row = document.createElement('label');
+        const row = document.createElement(schema.kind === 'segment' ? 'div' : 'label');
         row.className = 'setting-row';
         const name = document.createElement('span');
         name.textContent = schema.label;
         row.append(name);
-        let input: HTMLInputElement | HTMLSelectElement | HTMLButtonElement;
+        let input: HTMLInputElement | HTMLButtonElement | HTMLDivElement;
         if (schema.kind === 'select') {
-            const select = document.createElement('select');
-            for (const opt of schema.options) {
-                const el = document.createElement('option');
-                el.value = opt.value;
-                el.textContent = opt.label;
-                select.append(el);
-            }
-            input = select;
-            select.addEventListener('change', () => {
-                if (schema.key === 'appearance.font') this.store.set('appearance.fontCustom', '');
-                this.store.set(schema.key, select.value);
+            const menu = new SelectMenu({
+                label: schema.label,
+                options: schema.options,
+                onChange: value => this.store.set(schema.key, value),
             });
+            this.menus.set(schema.key, menu);
+            input = menu.trigger;
+        } else if (schema.kind === 'segment') {
+            const box = document.createElement('div');
+            box.className = 'segment';
+            box.setAttribute('role', 'group');
+            for (const opt of schema.options) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'segment-option';
+                btn.dataset.value = opt.value;
+                btn.textContent = opt.label;
+                btn.addEventListener('click', () => this.store.set(schema.key, opt.value));
+                box.append(btn);
+            }
+            input = box;
         } else if (schema.kind === 'toggle') {
             const btn = document.createElement('button');
             btn.type = 'button';
@@ -291,7 +405,6 @@ export class Customizer {
                 out.dataset.output = schema.key;
                 row.append(out);
             }
-            if (schema.key === 'content.cities') field.placeholder = '东京,伦敦,纽约 或 IANA 时区';
             field.addEventListener(schema.kind === 'text' ? 'change' : 'input', () => this.store.set(schema.key, schema.kind === 'slider' ? Number(field.value) : field.value));
             input = field;
         }
@@ -304,15 +417,31 @@ export class Customizer {
     private syncControls() {
         this.dialog.querySelectorAll<HTMLElement>('[data-setting]').forEach(el => {
             const key = el.dataset.setting!, value = this.store.get(key);
-            if (el instanceof HTMLButtonElement) {
-                el.classList.toggle('on', value === true);
-                el.setAttribute('aria-checked', String(value === true));
-            } else (el as HTMLInputElement).value = String(value);
             const disabled = key === 'weather.manual' && this.store.get('weather.mode') !== 'manual'
                 || ['weather.intensity', 'weather.lightning'].includes(key) && !this.store.get('weather.visual')
+                || key === 'weather.intensity' && this.store.get<boolean>('weather.intensityAuto')
+                || key === 'weather.intensityAuto' && this.store.get('weather.mode') !== 'live'
                 || key === 'weather.wetClock' && (this.store.get('weather.quality') !== 'realistic' || !this.store.get('weather.visual') || this.store.get('theme') === 'window')
                 || key === 'weather.glass' && (!this.store.get('weather.visual') || this.store.get('theme') !== 'window');
-            (el as HTMLInputElement).disabled = disabled;
+            if (el.classList.contains('segment')) {
+                const active = String(value);
+                el.querySelectorAll<HTMLButtonElement>('.segment-option').forEach(btn => {
+                    const on = btn.dataset.value === active;
+                    btn.classList.toggle('selected', on);
+                    btn.setAttribute('aria-pressed', String(on));
+                    btn.disabled = disabled;
+                });
+            } else if (el.classList.contains('select-trigger')) {
+                (el as HTMLButtonElement).disabled = disabled;
+                this.menus.get(key)?.sync(String(value));
+            } else if (el instanceof HTMLButtonElement) {
+                el.classList.toggle('on', value === true);
+                el.setAttribute('aria-checked', String(value === true));
+                el.disabled = disabled;
+            } else {
+                (el as HTMLInputElement).value = String(value);
+                (el as HTMLInputElement).disabled = disabled;
+            }
             if (key === 'weather.glass') (el.closest('.setting-row') as HTMLElement).hidden = this.store.get('theme') !== 'window';
             el.closest('.setting-row')?.classList.toggle('disabled', disabled);
         });
@@ -320,6 +449,7 @@ export class Customizer {
         if (qualityNote) qualityNote.textContent = this.store.get('theme') === 'studio' ? '雨雪粒子与其他主题同源，写实档会打湿数字、溅起水花；墙面原有的斜向光区随天气变冷变暗，雪天保留雪斑、云影与室内雷光。' : this.store.get('theme') === 'window'
             ? '窗边的雨水落在外侧玻璃上，室内时钟保持清晰。写实增加体积云、水滴折射与流动水痕；轻量保留简单雨滴。'
             : '轻量适合日常常驻；写实增加体积云与昼夜光照、景深雨雪、数字上的水珠与溅射，开销更高。';
+        this.syncCityPicker();
         this.dialog.querySelectorAll<HTMLOutputElement>('[data-output]').forEach(el => el.value = String(this.store.get(el.dataset.output!)));
         this.dialog.querySelectorAll<HTMLElement>('[data-theme-id]').forEach(el => { const selected = el.dataset.themeId === this.themes.id; el.classList.toggle('selected', selected); el.setAttribute('aria-pressed', String(selected)); });
         const deleteButton = this.dialog.querySelector<HTMLButtonElement>('.delete-background');
@@ -346,7 +476,7 @@ export class Customizer {
                 const btn = document.createElement('button');
                 btn.className = 'city-result';
                 btn.textContent = [hit.name, hit.admin1, hit.country].filter(Boolean).join(' · ');
-                btn.addEventListener('click', () => { this.searchRevision++; results.replaceChildren(); this.store.set('weather.city', hit.name); this.store.set('weather.mode', 'live'); void this.weather.selectLocation(hit); });
+                btn.addEventListener('click', () => { this.searchRevision++; results.replaceChildren(); this.store.set('weather.city', hit.name); this.store.set('weather.mode', 'live'); void this.weather.selectLocation({ name: hit.name, latitude: hit.latitude, longitude: hit.longitude }); });
                 results.append(btn);
             }
         } catch {
@@ -355,6 +485,14 @@ export class Customizer {
     }
 
     private locate() {
+        if ((this.store.get<string>('weather.apiKey') || '').trim()) {
+            this.notify('正在按网络 IP 定位当前位置…');
+            void this.weather.locateByIp().then(ok => {
+                if (ok) this.store.set('weather.mode', 'live');
+            });
+            return;
+        }
+        // 免 Key 回退：浏览器定位 + BigDataCloud 地名反查（0.2.1 原始行为）。
         if (!navigator.geolocation) { this.notify('此浏览器不支持定位，请手动搜索城市'); return; }
         this.notify('正在请求位置…');
         const revision = ++this.searchRevision;

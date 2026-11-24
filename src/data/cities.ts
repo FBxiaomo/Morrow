@@ -75,6 +75,48 @@ export function parseCities(raw: string): string[] {
     return raw.split(/[,，、;；]/).map(part => part.trim()).filter(Boolean).slice(0, 5);
 }
 
+export interface CitySuggestion {
+    label: string;
+    zone: string;
+    time: string;
+}
+
+const ZONE_ALIASES: Record<string, string[]> = {};
+for (const [alias, zone] of Object.entries(EN_ALIASES)) (ZONE_ALIASES[zone] ??= []).push(alias);
+
+/** Local-only lookup over the built-in Chinese names and English aliases; no network. */
+export function searchCities(query: string, now: Date = new Date(), limit = 8): CitySuggestion[] {
+    const q = query.trim();
+    if (!q) return [];
+    const lower = q.toLowerCase();
+    const hits: { label: string; zone: string; rank: number }[] = [];
+    for (const [label, zone] of Object.entries(CITY_ZONES)) {
+        let rank = -1;
+        if (label.startsWith(q)) rank = 0;
+        else if (label.includes(q)) rank = 1;
+        else for (const alias of ZONE_ALIASES[zone] || []) {
+            if (alias.startsWith(lower)) { rank = 2; break; }
+            if (alias.includes(lower)) rank = 3;
+        }
+        if (rank >= 0) hits.push({ label, zone, rank });
+    }
+    hits.sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label, 'zh'));
+    return hits.slice(0, limit).map(({ label, zone }) => ({ label, zone, time: formatCityTime(now, zone) }));
+}
+
+/** De-duplicated IANA zones with a representative Chinese city name, for the main-clock picker. */
+export const CLOCK_ZONE_OPTIONS: { value: string; label: string }[] = (() => {
+    const seen = new Map<string, string>();
+    for (const [label, zone] of Object.entries(CITY_ZONES)) if (!seen.has(zone)) seen.set(zone, label);
+    return Array.from(seen, ([zone, label]) => ({ value: zone, label }));
+})();
+
+/** First built-in Chinese city name for a zone, so aliases and IANA input land on one label. */
+export function canonicalCityLabel(zone: string): string | null {
+    for (const [label, z] of Object.entries(CITY_ZONES)) if (z === zone) return label;
+    return null;
+}
+
 export function formatCityTime(now: Date, zone: string): string {
     return new Intl.DateTimeFormat('zh-CN', { timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
 }

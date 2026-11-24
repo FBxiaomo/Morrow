@@ -23,7 +23,7 @@ if (store.get('experience.version') !== 5) {
     store.set('experience.version', 5);
 }
 const themes = new ThemeManager(store);
-const weather = new WeatherService();
+const weather = new WeatherService({ apiKey: () => store.get<string>('weather.apiKey') });
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 canvas.setAttribute('aria-hidden', 'true');
 const landscape = new Landscape(canvas, store);
@@ -97,7 +97,7 @@ function appearance() {
     const custom = store.get<string>('appearance.fontCustom').trim();
     if (custom) root.style.setProperty('--clock-font', JSON.stringify(custom) + ', ' + (FONT_STACKS[font] || FONT_STACKS.sans));
     else root.style.setProperty('--clock-font', FONT_STACKS[font] || FONT_STACKS.sans);
-    root.style.setProperty('--clock-weight', custom ? '400' : font === 'light' ? '200' : font === 'display' ? '800' : font === 'sans' ? '500' : '400');
+    root.style.setProperty('--clock-weight', custom ? '400' : font === 'light' ? '300' : font === 'sans' ? '500' : font === 'rounded' ? '500' : '400');
     document.body.dataset.customFont = custom ? 'true' : 'false';
     root.style.setProperty('--clock-scale', String(store.get<number>('appearance.size') / 100));
     root.style.setProperty('--clock-ink', store.get<string>('appearance.color'));

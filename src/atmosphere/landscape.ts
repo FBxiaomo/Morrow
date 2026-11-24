@@ -1,5 +1,5 @@
 import type { SettingsStore } from '../data/settings';
-import type { WeatherCategory, WeatherInfo } from '../data/weather';
+import { effectiveIntensity, type WeatherCategory, type WeatherInfo } from '../data/weather';
 import { backgroundImage } from '../data/themes';
 import { PhotographicScenery } from './photographic';
 import { RealWeatherEffects } from './real-weather';
@@ -128,7 +128,7 @@ export class Landscape {
     }
     private syncWindowGlass() {
         const wanted = !!this.effects && this.store.get('theme') === 'window' && this.store.get('weather.glass')
-            && this.state.rain * this.store.get<number>('weather.intensity') / 100 > .015;
+            && this.state.rain * effectiveIntensity(this.store, this.weather) / 100 > .015;
         if (!wanted) {
             if (this.windowGlass) this.disposeGlass();
             else if (document.body.dataset.windowGlass !== 'off') document.body.dataset.windowGlass = 'off';
@@ -223,13 +223,13 @@ export class Landscape {
         this.syncWindowGlass();
         this.effects?.render({width:this.width, height:this.height, time:this.time, dt:this.frameDt, still,
             rain:this.state.rain, snow:this.state.snow, fog:this.state.fog, category:this.category, background:this.canvas,
-            refractedWindow:!!this.windowGlass, temperature:this.snowTemperature()});
+            refractedWindow:!!this.windowGlass, temperature:this.snowTemperature(), intensity:effectiveIntensity(this.store, this.weather) / 100});
         if (this.store.get('theme') === 'window' && this.effects) {
             // Precipitation belongs outside: composite it before the lens and the DOM frame.
             this.ctx.drawImage(this.effects.canvas, 0, 0, this.width, this.height);
         }
         this.windowGlass?.render(this.canvas, this.width, this.height, this.time,
-            this.state.rain * this.store.get<number>('weather.intensity') / 100, still);
+            this.state.rain * effectiveIntensity(this.store, this.weather) / 100, still);
         const cost = performance.now() - started;
         this.drawnFrames++; this.drawCost += cost; this.peakCost = Math.max(this.peakCost, cost);
         this.dirty = false;
@@ -258,7 +258,7 @@ export class Landscape {
         else if (this.photos.draw(c, {theme, width:w, height:h, phase:this.phase, dark:this.state.dark,
             clouds:this.state.clouds, fog:this.state.fog, time:t, dt:this.frameDt, still,
             realistic:this.store.get('weather.quality') === 'realistic' && this.store.get<boolean>('weather.visual'), volumetric:volume,
-            category:this.category, intensity:this.store.get<number>('weather.intensity') / 100,
+            category:this.category, intensity:effectiveIntensity(this.store, this.weather) / 100,
             visual:this.store.get<boolean>('weather.visual'), lightning:this.store.get<boolean>('weather.lightning')})) {
             // Local photographic plate plus independently animated weather and light.
             this.drawVolumetric(still);
@@ -537,7 +537,7 @@ export class Landscape {
     }
     private precipitation(still: boolean, studio: boolean) {
         const { ctx: c, width: w, height: h, time: t, state: s } = this;
-        const intensity = this.store.get<number>('weather.intensity') / 100;
+        const intensity = effectiveIntensity(this.store, this.weather) / 100;
         c.save();
         if (!studio && s.fog > .01) {
             for (let i = 0; i < 4; i++) {
